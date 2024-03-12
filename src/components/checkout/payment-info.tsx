@@ -1,9 +1,23 @@
-import { useRef, useEffect, useState } from "react"
+import { useRef, useEffect, useState, MutableRefObject } from "react"
 
-export default function PaymentInfo({ markup, onMsaxCcResult, isOkToCheckout, refFromChild, handleCheckout }) {
-  const submitRef = useRef();
+interface IPaymentInfoProps {
+  markup: string
+   onMsaxCcResult: (token: string)=>{}
+   isOkToCheckout: boolean
+   refFromChild: (ref:MutableRefObject<HTMLButtonElement | null>)=> void
+   handleCheckout: ()=>{}
+}
+
+interface IDataOject {
+  id: string
+  type: string
+  value: string
+}
+
+export default function PaymentInfo({ markup, onMsaxCcResult, isOkToCheckout, refFromChild, handleCheckout }: Readonly<IPaymentInfoProps>) {
+  const submitRef = useRef<HTMLButtonElement | null>(null);
   // we need serviceAccountId for the checkout payload for 
-    const iframeRef = useRef(null)
+    const iframeRef = useRef<HTMLIFrameElement | null>(null)
     const [isValid, setIsValid] = useState(false)
     // const [cardTokenAndId, setCardTokenAndId]  = useState(null)
     // const [cardType, setCardType] = useState(null)
@@ -12,13 +26,13 @@ export default function PaymentInfo({ markup, onMsaxCcResult, isOkToCheckout, re
       refFromChild(submitRef)
     }, [refFromChild])
 
-    function iframeEventListener(event) {
+    function iframeEventListener(event: any) {
         console.log('event', event)
         if (typeof event.data !== 'string') {
             return
         }
         // turn that string back into an object
-        const dataAsObject = JSON.parse(event.data)
+        const dataAsObject: IDataOject = JSON.parse(event.data)
         //event should have data property with a value like 
         // {"id": "136e9c86-31a1-4177-b2b7-a027c63edbe0","type": "usaEpayValid", "value": "eyJVU0FlUEF5VmFsaWQiOnRydWV9"}
         // console.log('Event into iframeEventListener', event)
@@ -30,6 +44,8 @@ export default function PaymentInfo({ markup, onMsaxCcResult, isOkToCheckout, re
         }
 
         if (type === 'msax-cc-result') {
+          // looks like
+          // {"id":"136e9c86-31a1-4177-b2b7-a027c63edbe0","type":"msax-cc-result","value":"eyJ0eXBlIjoicGF5bWVudF9rZXkiLCJrZXkiOiJhUmpJSDJzOUxkSGhnbXpKVEhtUkg1IiwiY3JlZGl0Y2FyZCI6eyJudW1iZXIiOiI2MDExMjJ4eHh4eHgyMjI0IiwiY2FyZHR5cGUiOiJEaXNjb3ZlciJ9fQ=="}
           //const decoded = atob(value) // move this to parent
           onMsaxCcResult(value)
         }
@@ -47,15 +63,15 @@ export default function PaymentInfo({ markup, onMsaxCcResult, isOkToCheckout, re
         // there will be a message 'msax-cc-result' which will have the btoa encoded card info
     }
 
-    function tellIframeToSubmit(event) {
-      iframeRef.current.contentWindow.postMessage(JSON.stringify({type: 'msax-cc-submit',value: 'true'}),'*')
+    function tellIframeToSubmit(event: any) {
+      iframeRef?.current?.contentWindow?.postMessage(JSON.stringify({type: 'msax-cc-submit',value: 'true'}),'*')
       // it will then post a result like "{\"id\":\"136e9c86-31a1-4177-b2b7-a027c63edbe0\",\"type\":\"msax-cc-result\",\"value\":\"eyJ0eXBlIjoicGF5bWVudF9rZXkiLCJrZXkiOiJqTFZEcHhYcDFxZ1FaSjF3YVNwQjREIiwiY3JlZGl0Y2FyZCI6eyJudW1iZXIiOiI2MDExMjJ4eHh4eHgyMjI0IiwiY2FyZHR5cGUiOiJEaXNjb3ZlciJ9fQ==\"}"
       // when you decode atob you will see { "type": "payment_key","key": "jLVDpxXp1qgQZJ1waSpB4D","creditcard": {"number": "601122xxxxxx2224","cardtype": "Discover"}}
     }
 
     useEffect(()=>{
-        iframeRef && iframeRef.current.contentDocument.open()
-        iframeRef.current.contentDocument.write(markup)
+        iframeRef?.current?.contentDocument?.open()
+        iframeRef?.current?.contentDocument?.write(markup)
         window.addEventListener('message', iframeEventListener)
 
         // cleanup
@@ -67,7 +83,7 @@ export default function PaymentInfo({ markup, onMsaxCcResult, isOkToCheckout, re
   return (
     <div>
       <h1>Payment Info</h1>
-      <iframe ref={iframeRef} sandbox="allow-scripts allow-forms allow-same-origin allow-popups" src=""></iframe>
+      <iframe ref={iframeRef} title="usa epay iframe" sandbox="allow-scripts allow-forms allow-same-origin allow-popups" src=""></iframe>
       {/* instead of this button, you would validate what the ifrae has told us so far, then call the tellIframeToSubmit function */}
       <button onClick={tellIframeToSubmit} className="mt-4 px-4 py-2 font-semibold text-sm bg-amber-500 text-white rounded-md shadow-sm opacity-100">Tell iframe to submit</button>
       { isOkToCheckout && <p>O.K. to checkout</p> }

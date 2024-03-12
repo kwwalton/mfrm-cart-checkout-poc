@@ -9,11 +9,12 @@ import CartLineItems from '@/components/cart/cart-line-items'
 import HttpClient from '@/HttpClient'
 import { updateQuantity } from '@/lib/actions'
 import { useEffect, useState } from 'react'
-import OrderSummary
- from '@/components/order-summary'
- import Stepper from '@/components/stepper'
+import OrderSummary from '@/components/order-summary'
+import Stepper from '@/components/stepper'
+import { ICart, ICartLine, IUpdateQuantityPayload } from '@/types/cart'
+import { IProduct, IProducts } from '@/types/product'
 
-function getCookieValueOnClient(cookieName) {
+function getCookieValueOnClient(cookieName: string) {
   const decodedCookies = decodeURIComponent(document.cookie).split(';')
   let cookieValue = null
   for (let i = 0; i < decodedCookies.length; i++) {
@@ -24,18 +25,26 @@ function getCookieValueOnClient(cookieName) {
     }
   }
   return cookieValue
-} 
-async function getCartWithHttpClient() {
-  const cartId = getCookieValueOnClient('mfrm_poc_cart_t1_id') || '79dd3d1d-8236-4a36-8451-bd7c67d40d72'
-  return await HttpClient(`/Commerce/Carts('${cartId}')?api-version=7.3`);
+}
+async function getCartWithHttpClient(): Promise<ICart> {
+  const cartId =
+    getCookieValueOnClient('mfrm_poc_cart_t1_id') ||
+    '79dd3d1d-8236-4a36-8451-bd7c67d40d72'
+  return await HttpClient(`/Commerce/Carts('${cartId}')?api-version=7.3`)
 }
 
-async function getProductsByIdWithHttpClient(products) {
+async function getProductsByIdWithHttpClient(
+  productIds: number[]
+): Promise<IProducts> {
   const body = {
-    "channelId": 5637154326,
-    "productIds": products
+    channelId: 5637154326,
+    productIds: productIds
   }
-  return await HttpClient('/Commerce/Products/GetByIds?$top=1000&api-version=7.3', 'POST', body);
+  return await HttpClient(
+    '/Commerce/Products/GetByIds?$top=1000&api-version=7.3',
+    'POST',
+    body
+  )
 }
 
 // async function updateQuantityWithHttpClient(cartId, body) {
@@ -105,10 +114,14 @@ async function getProductsByIdWithHttpClient(products) {
 // }
 
 // If you call CRT from server, do not use the redirect trick, call the server directly
+interface NextPageProps<SlugType = string> {
+  params: { slug: SlugType }
+  searchParams?: { [key: string]: string | string[] | undefined }
+}
 
-export default function CartPage({ searchParams }) {
-  const [cart, setCart] = useState(null)
-  const [products, setProducts] = useState(null)
+export default function CartPage({ searchParams }: NextPageProps) {
+  const [cart, setCart] = useState<ICart | null>(null)
+  const [products, setProducts] = useState<IProducts | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
   //const cookieStore = cookies()
   //const cartId = cookieStore.get('mfrm-poc-cartid')
@@ -117,14 +130,11 @@ export default function CartPage({ searchParams }) {
   // TODO: go through line items and get productId's and call for product info
 
   useEffect(() => {
-    getCartWithHttpClient()
-      .then((res) => {
-        const productIds = res.CartLines.map((cartLine) => cartLine.ProductId)
-        setCart(res)
-        getProductsByIdWithHttpClient(productIds).then((res) =>
-          setProducts(res)
-        )
-      })
+    getCartWithHttpClient().then((res) => {
+      const productIds = res.CartLines.map((cartLine) => cartLine.ProductId)
+      setCart(res)
+      getProductsByIdWithHttpClient(productIds).then((res) => setProducts(res))
+    })
   }, [])
 
   // let cartycartcart = getCartWithHttpClient()
@@ -132,10 +142,12 @@ export default function CartPage({ searchParams }) {
   // const productIds = cartycartcart.CartLines.map(cl => cl.ProductId);
   // const products =  use(getProductsByIdWithHttpClient(productIds));
 
-  async function handleQuantityChange(body) {
+  async function handleQuantityChange(
+    body: IUpdateQuantityPayload
+  ): Promise<void> {
     setIsUpdating(true)
     const updatedCart = await HttpClient(
-      `/Commerce/Carts('${cart.Id}')/UpdateCartLines?api-version=7.3`,
+      `/Commerce/Carts('${cart!.Id}')/UpdateCartLines?api-version=7.3`,
       'POST',
       body
     )
@@ -151,14 +163,23 @@ export default function CartPage({ searchParams }) {
       <div className="header grid grid-cols-4 lg:grid-cols-4 gap-4">
         <div className="header__head col-span-4 lg:col-span-3">
           <h1 className="text-lg font-bold">Shopping Cart</h1>
-          <p>Cart Id: {searchParams.id}</p>
+          <p>Cart Id: {searchParams?.id}</p>
           <p>Cart Id from server: {cart?.Id ?? `Loading...`}</p>
         </div>
-        <div className="header__stepper col-span-4 lg:col-span-1"><Stepper /></div>
+        <div className="header__stepper col-span-4 lg:col-span-1">
+          <Stepper />
+        </div>
       </div>
       <div className="body grid grid-cols-4 lg:grid-cols-4 gap-4">
         <div className="body__cart-items col-span-4 lg:col-span-3">
-          {cart && products && <CartLineItems cartLineItems={cart.CartLines} products={products.value} onQuantityChange={handleQuantityChange} isUpdating={isUpdating}/>}
+          {cart && products && (
+            <CartLineItems
+              cartLineItems={cart.CartLines}
+              products={products.value}
+              onQuantityChange={handleQuantityChange}
+              isUpdating={isUpdating}
+            />
+          )}
         </div>
         <div className="body__order-summary col-span-4 lg:col-span-1">
           {cart && <OrderSummary cart={cart} />}
@@ -167,4 +188,3 @@ export default function CartPage({ searchParams }) {
     </div>
   )
 }
-

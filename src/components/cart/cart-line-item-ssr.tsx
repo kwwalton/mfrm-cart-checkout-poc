@@ -1,7 +1,22 @@
-import CartLineImage from "@/components/cart/cart-line-image"
-import CartLineQuantitySsr from "./cart-line-quantity-ssr"
-export default function CartLineItem({ cartLine, product }) {
-  const formattedPrice = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(product.Price)
+import CartLineImage from '@/components/cart/cart-line-image'
+import CartLineQuantitySsr from './cart-line-quantity-ssr'
+import { ICartLine } from '@/types/cart'
+import { IProduct } from '@/types/product'
+
+interface ICartLineItemSsrProps {
+  cartId: string
+  cartLine: ICartLine
+  product: IProduct
+}
+export default function CartLineItemSsr({
+  cartId,
+  cartLine,
+  product
+}: ICartLineItemSsrProps) {
+  const formattedPrice = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(product.Price)
 
   return (
     <li className="border-b-2 my-5 pb-5">
@@ -11,7 +26,7 @@ export default function CartLineItem({ cartLine, product }) {
       <CartLineImage src={product.PrimaryImageUrl} />
       <p>{product.Name}</p>
       <p>{formattedPrice}</p>
-      <CartLineQuantitySsr cartLine={cartLine} />
+      <CartLineQuantitySsr cartId={cartId} cartLine={cartLine} />
     </li>
   )
 }

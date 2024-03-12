@@ -1,5 +1,7 @@
 'use client'
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, FormEvent, MutableRefObject } from "react"
+import { IMFIATPInventoryDynamic, IEnrichedDeliveryInfo } from '../../app/checkout/page'
+
 // Example of atpSlots
 // const result = {
 //     ATPInventoryDynamicData: [
@@ -28,17 +30,28 @@ import { useRef, useEffect } from "react"
 //   };
 
 // Any time delivery method changes, remove the current delivery line item from the cart, wait for it, then add the new one as a line item
-  
-export default function DeliveryInfo({ atpSlots, deliveryServices, refFromChild, handleValidatedForm }) {
-    const submitRef = useRef();
-console.log('atpSlots', atpSlots)
+
+interface IDeliveryInfoProps {
+  atpSlots: IMFIATPInventoryDynamic
+  deliveryServices: IEnrichedDeliveryInfo[]
+  refFromChild: (ref:MutableRefObject<HTMLButtonElement | null>)=> void
+  handleValidatedForm: (itemId: string, date: string) => {}
+}
+
+export default function DeliveryInfo({ atpSlots, deliveryServices, refFromChild, handleValidatedForm }: Readonly<IDeliveryInfoProps>) {
+    const submitRef = useRef<HTMLButtonElement | null>(null);
+    console.log('atpSlots', atpSlots)
     useEffect(() => {
       refFromChild(submitRef)
     }, [refFromChild])
 
-    const handleSubmit = (event) => {
+    const handleSubmit = (event: FormEvent) => {
       event.preventDefault()
-      handleValidatedForm(event.target.method.value, event.target.date.value)
+      const target = event.target as typeof event.target & {
+        method: { value: string };
+        date: { value: string };
+      };
+      handleValidatedForm(target.method.value, target.date.value)
     }
 
   return (

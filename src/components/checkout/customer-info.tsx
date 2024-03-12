@@ -1,13 +1,34 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, MutableRefObject, ChangeEvent, FormEvent } from 'react'
+import { ICustomerInfo } from '@/app/checkout/page'
 // NOTE: we need to make a copy of the cart for checkout, yes, its weird...
 // a regular cart has CartTypeValue 1, the copy makes it a 2 and that is what we take through checkout
 // if you go back to cart, you use the old cart of type 1 and then go through copy process again if you go into checkout
-export default function CustomerInfo({ cartId, refFromChild, handleValidatedForm }) {
+interface ICustomerInfoProps {
+  cartId: string
+  refFromChild: (ref:MutableRefObject<HTMLButtonElement | null>)=> void
+  handleValidatedForm: (payload: ICustomerInfo) => {}
+}
 
-  const [formData, setFormData] = useState(null)
-  const [isFormValid, setIsFormValid] = useState(null)
-  const submitRef = useRef();
+interface IFormData {
+  firstName: string
+  lastName: string
+  address1: string
+  city: string
+  state: string
+  zipCode: string
+  phone: string
+}
+
+interface IFormDateInitialEntry {
+  [key:string]: string
+}
+
+export default function CustomerInfo({ cartId, refFromChild, handleValidatedForm }: Readonly<ICustomerInfoProps>) {
+
+  const [formData, setFormData] = useState<IFormData | IFormDateInitialEntry | null>(null)
+  const [isFormValid, setIsFormValid] = useState(false)
+  const submitRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(()=>{
     refFromChild(submitRef)
@@ -30,28 +51,32 @@ export default function CustomerInfo({ cartId, refFromChild, handleValidatedForm
   //   }
   // }
 
-  function buildPayload() {
+  function buildPayload(): ICustomerInfo {
     return {
       Id: cartId,
       ShippingAddress: {
-        Name: formData.firstName + '##' + formData.lastName,
+        Name: formData!.firstName + '##' + formData!.lastName,
         AddressTypeValue: 6,
-        City: formData.city,
-        State: formData.state,
-        Street: formData.address1,
+        City: formData!.city,
+        State: formData!.state,
+        Street: formData!.address1,
         ThreeLetterISORegionName: 'USA',
         TwoLetterISORegionName: 'US',
-        ZipCode: formData.zipCode,
-        Phone: formData.phone
-      }
+        ZipCode: formData!.zipCode,
+        Phone: formData!.phone
+      } 
     }
   }
 
-  const handleChange = (event) => {
+  const handleChange = (event: ChangeEvent) => {
+    const target = event.target as typeof event.target & {
+      name: 'firstName' | 'lastName' | 'address1' | 'city' | 'zipCode' |'phone';
+      value: string;
+    };
     if (formData === null) {
-      setFormData({ [event.target.name]: event.target.value })
+      setFormData({ [target.name]: target.value })
     } else {
-      setFormData({ ...formData, [event.target.name]: event.target.value })
+      setFormData({ ...formData, [target.name]: target.value })
     }
     // problem is state has not updated yet
     // setIsFormValid(
@@ -65,7 +90,7 @@ export default function CustomerInfo({ cartId, refFromChild, handleValidatedForm
     // )
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
 
     if (!!formData?.firstName &&

@@ -4,13 +4,13 @@ import HttpClient from '@/HttpClient'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-async function getSalesOrder(orderId) {
+async function getSalesOrder(orderId: string) {
   return await HttpClient(`/Commerce/SalesOrders('${orderId}')?api-version=7.3`)
 }
 
 export default function OrderConfirmationPage() {
   const searchParams = useSearchParams()
-  const orderId = searchParams.get('id')
+  const orderId = searchParams.get('id') || ''
   const [orderInfo, setOrderInfo] = useState(null)
   useEffect(() => {
     getSalesOrder(orderId).then((res) => setOrderInfo(res))

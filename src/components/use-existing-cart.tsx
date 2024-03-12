@@ -1,10 +1,10 @@
 'use client'
-import { useRef } from "react";
+import { FormEvent, useRef } from "react";
 export default function UseExistingCart() {
-    const cartid = useRef(null)
-    const handleSubmit = (event:any) => {
+    const cartid = useRef<HTMLInputElement | null>(null)
+    const handleSubmit = (event:FormEvent) => {
         event.preventDefault();
-        console.log(cartid.current.value)
+        console.log(cartid.current?.value)
     }
   return (
     <main>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { ICart } from '@/types/cart'
 
 export default function GetCartFromServer() {
-  const [cartInfo, setCartInfo] = useState({});
+  const [cartInfo, setCartInfo] = useState({} as ICart);
     // https://maxschmitt.me/posts/next-js-api-proxy
     // to set up a proxy using next js rewrites to avoid CORS problems calling CRT endpoints
   const getCart = async () => {

@@ -6,10 +6,353 @@ import DeliveryInfo from '@/components/checkout/delivery-info'
 import PaymentInfo from '@/components/checkout/payment-info'
 import OrderSummary from '@/components/order-summary'
 import Stepper from '@/components/stepper'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, RefObject, MutableRefObject } from 'react'
 import getCookieValueOnClient from '@/utils/clientCookies'
 import { deliveryInfoFromCms } from '@/delivery-info'
 import { useRouter } from 'next/navigation'
+import { ICart, ICartLine } from '@/types/cart'
+
+// Types
+
+interface IUpdateLineDeliverySpecifications {
+  lineDeliverySpecifications: IUpdateLineDeliverySpecificationsLines[]
+}
+
+interface IUpdateLineDeliverySpecificationsLines {
+  LineId: string
+  DeliverySpecification: {
+    DeliveryModeId: string
+    DeliveryPreferenceTypeValue: number
+    DeliveryAddress: {
+      Name: string
+      AddressTypeValue: number
+      City: string
+      State: string
+      Street: string
+      ZipCode: string
+      ThreeLetterISORegionName: string
+      TaxGroup: string
+    }
+  }
+}
+
+export interface ICustomerInfo {
+  Id: string
+  ShippingAddress: {
+    Name: string
+    AddressTypeValue: number
+    City: string
+    State: string
+    Street: string
+    ThreeLetterISORegionName: string
+    TwoLetterISORegionName: string
+    ZipCode: string
+    Phone: string
+  }
+}
+
+interface IShippingAddress {
+  Name: string
+    AddressTypeValue: number
+    City: string
+    State: string
+    Street: string
+    ThreeLetterISORegionName: string
+    TwoLetterISORegionName: string
+    ZipCode: string
+    Phone: string
+}
+
+interface IAtpInventoryDynamic {
+  deliveryScheduleParam: {
+    InventoryType: string
+    Weeks: number
+    StoreId: string
+    Page: string
+    RequestedDate: string
+    ZipCode: string
+    ItemLines: IAtpInventoryDynamicItemLine[]
+  }
+}
+interface IAtpInventoryDynamicItemLine {
+  ItemId: string
+  Quantity: number
+  VariantRecordId: string
+}
+
+interface IAddCartLines {
+  cartLines: IAddCartLine[]
+}
+
+interface IAddCartLine {
+  ProductId: number
+  EntryMethodTypeValue: number
+  ItemId: string
+  Quantity: number
+  DeliveryMode: string
+  UnitOfMeasureSymbol: string
+  Price: number
+}
+
+interface IUpdateDeliveryCartLine {
+  ProductId: number
+  EntryMethodTypeValue: number
+  ItemId: string
+  Quantity: number
+  DeliveryMode: string
+  UnitOfMeasureSymbol: string
+  Price: number
+}
+
+interface IUpdateShippingDateTimeCartLine {
+  AttributeValues: any
+  DeliveryMode: string
+  ItemTaxGroupId: string
+  LineId: string
+  Quantity: number
+  WarehouseId: string
+}
+
+interface IRemoveCartLines {
+  cartLineIds: string[]
+}
+
+interface IGetActivePrices {
+  projectDomain: {
+    ChannelId: number
+    CatalogId: number
+  }
+  productIds: number[]
+  activeDate: Date
+  customerId: null
+  affiliationLoyaltyTiers: any[]
+  includeSimpleDiscountsInContextualPrice: true
+}
+interface IActivePrices {
+  value: IActivePrice[]
+}
+
+interface IActivePrice {
+    "ProductId": number
+    "ListingId": number
+    "BasePrice": number
+    "TradeAgreementPrice": number
+    "AdjustedPrice": number
+    "MaxVariantPrice": number
+    "MinVariantPrice": number
+    "CustomerContextualPrice": number
+    "DiscountAmount": number
+    "CurrencyCode": string
+    "ItemId": string,
+    "UnitOfMeasure": string
+    "ValidFrom": string
+    "ProductLookupId": number
+    "ChannelId": number,
+    "CatalogId": number
+    "SalesAgreementPrice": number
+    "PriceSourceTypeValue": number
+    "DiscountLines": any[]
+    "AttainablePriceLines": any[]
+    "ExtensionProperties": any[]
+}
+
+interface IUpdateCartLines {
+  cartLines: ICartLine[] | IUpdateDeliveryCartLine[] | IUpdateShippingDateTimeCartLine[]
+}
+
+interface IGetCardPaymentAcceptPoint {
+  cardPaymentAcceptSettings: {
+    HostPageOrigin: string
+    AdaptorPath: string
+    CardPaymentEnabled: false
+    CardTokenizationEnabled: true
+    HideBillingAddress: true
+    TenderTypeId: string
+    PaymentAmount: number
+  }
+  extensionProperties: []
+}
+
+interface IGetCardPaymentAcceptPointResponse {
+  AcceptPageUrl: string
+  AcceptPageSubmitUrl: string
+  MessageOrigin: string
+  AcceptPageContent: string
+  PaymentConnectorId: string
+  NotReloadAcceptPageContentWhenAmountChanged: boolean
+}
+
+interface IRetrieveCardPaymentAcceptResult {
+  resultAccessCode: string
+  extensionProperties: IRetrieveCardPaymentAcceptResultExtensionProperty[]
+  cartId: string
+  settings: {
+    ReturnUrl: string
+    PaymentConnectorId: string
+  }
+}
+
+interface IRetrieveCardPaymentAcceptResultExtensionProperty {
+  Key: string
+  Value: {
+    BooleanValue: true
+    ByteValue: number
+    DateTimeOffsetValue: string
+    DecimalValue: number
+    IntegerValue: number
+    LongValue: number
+    StringValue: string
+  }
+}
+
+interface IRetrieveCardPaymentAcceptResultResponse {
+  TokenizedPaymentCard: {
+    IsSwipe: boolean
+    TenderType: string
+    Country: string
+    House: string
+    Address1: string
+    Address2: string
+    City: string
+    State: string
+    Zip: string
+    NameOnCard: string
+    CardTypeId: string
+    ExpirationMonth: number
+    ExpirationYear: number
+    CardTokenInfo: {
+      CardToken: string
+      UniqueCardId: string
+      ServiceAccountId: string
+      MaskedCardNumber: string
+    }
+    ExtensionProperties: []
+  }
+  PaymentSdkErrors: []
+}
+
+interface IRetrieveCardPaymentAcceptResultTokenizedPaymentCard {
+  IsSwipe: boolean
+  TenderType: string
+  Country: string
+  House: string
+  Address1: string
+  Address2: string
+  City: string
+  State: string
+  Zip: string
+  NameOnCard: string
+  CardTypeId: string
+  ExpirationMonth: number
+  ExpirationYear: number
+  CardTokenInfo: {
+    CardToken: string
+    UniqueCardId: string
+    ServiceAccountId: string
+    MaskedCardNumber: string
+  }
+  ExtensionProperties: []
+}
+interface ICheckout {
+  receiptEmail: string
+  cartTenderLines: [
+    {
+      Currency: string
+      Amount: number
+      TenderTypeId: string
+      CardTypeId: string
+      TokenizedPaymentCard: {
+        IsSwipe: false
+        TenderType: string
+        CardTokenInfo: {
+          CardToken: string
+          UniqueCardId: string
+          ServiceAccountId: string
+          MaskedCardNumber: string
+        }
+        Phone: string
+        Country: string
+        House: string
+        Address1: string
+        Address2: string
+        City: string
+        State: string
+        Zip: string
+        NameOnCard: string
+        CardTypeId: string
+        ExpirationMonth: number
+        ExpirationYear: number
+        ExtensionProperties: []
+      }
+      ExtensionProperties: ICheckoutExtensionProperty[]
+    }
+  ]
+  cartVersion: number
+}
+
+interface ICheckoutExtensionProperty {
+  Key: string
+  Value: { StringValue: string } | { BooleanValue: boolean}
+}
+
+export interface IDeliveryInfo {
+  serviceName: string
+  serviceId: number
+  serviceSku: string
+  serviceProductRecId: number
+  displayServiceSku: boolean
+  active?: boolean
+  descriptionMessage: string
+  descriptionHyperlink: object
+  multipleMessagesBasedOnState?: { state: string; message: string }[]
+  switchableServiceIds: string
+  DefaultStateWithDeliveryExpanded: boolean
+  defaultStateWithWillCallExpanded: boolean
+  willCallMessage: string
+  willCallTitle: string
+  callOrTextMessage: string
+  warningMessage?: string
+  recommended: boolean
+  addKeyInPrice?: boolean
+  childService?: IDeliveryChildService[]
+}
+
+interface IDeliveryChildService {
+  serviceName: string
+  serviceSKU: string
+  productRectId: number
+  redeliveryMessage: string
+  active: boolean
+  excludeZipCode: boolean
+  alternativeSolution: boolean
+}
+export interface IEnrichedDeliveryInfo extends IDeliveryInfo {
+  priceInfo: IActivePrice
+}
+interface IATPSlot {
+  Location1: string
+  Zone: string
+  ZoneId: string
+  SlotDate: string
+  StartTime: string
+  EndTime: string
+  Slots: string
+  MFIATPLeadDate: string
+  Available: string
+  ATPQuantity: string
+  SourceSystem: string
+  IsTranscity: boolean
+  IsNationWide: boolean
+}
+interface IMFIATPInventoryDynamicItem {
+  Date: string
+  AvailableSlots: string
+  ATPSlots: IATPSlot[]
+}
+
+export interface IMFIATPInventoryDynamic {
+  ATPInventoryDynamicData: IMFIATPInventoryDynamicItem[]
+}
 
 const defaultCartCookie = '79dd3d1d-8236-4a36-8451-bd7c67d40d72'
 
@@ -19,19 +362,19 @@ async function getCheckoutCart(shoppingCartId: string) {
   return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/Copy?api-version=7.3`, 'POST', body);
 }
 
-async function setPreliminaryDelivery(shoppingCartId: string, payload) {
+async function setPreliminaryDelivery(shoppingCartId: string, payload: IUpdateLineDeliverySpecifications) {
   // payload
   // {"lineDeliverySpecifications":[{"LineId":"632084d09d544c308c1b833ec35a106d","DeliverySpecification":{"DeliveryModeId":"Delivery","DeliveryPreferenceTypeValue":1,"DeliveryAddress":{"Name":"","AddressTypeValue":6,"City":"windsor","State":"CT","Street":"","ZipCode":"06095","ThreeLetterISORegionName":"USA","TaxGroup":"VertexAR"}}},{"LineId":"36e16826ecb6470da6f375f20b022d54","DeliverySpecification":{"DeliveryModeId":"Delivery","DeliveryPreferenceTypeValue":1,"DeliveryAddress":{"Name":"","AddressTypeValue":6,"City":"windsor","State":"CT","Street":"","ZipCode":"06095","ThreeLetterISORegionName":"USA","TaxGroup":"VertexAR"}}}]}
   return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/UpdateLineDeliverySpecifications?api-version=7.3`, 'POST', payload);
 }
 
-async function submitCustomerInfo(shoppingCartId, payload) {
+async function submitCustomerInfo(shoppingCartId: string, payload: ICustomerInfo) {
   // returns a 204, ok, no content
   return await HttpClient(`/Commerce/Carts('${shoppingCartId}')?api-version=7.3`, 'PATCH', payload)
 }
 
 // Delivery Information
-async function getAtpInventoryDynamic(payload) {
+async function getAtpInventoryDynamic(payload: IAtpInventoryDynamic): Promise<IMFIATPInventoryDynamic> {
   // payload
   // {"deliveryScheduleParam":{"InventoryType":"Delivery","Weeks":6,"StoreId":"","Page":"plp","RequestedDate":"01/24/2024","ZipCode":"06095","ItemLines":[{"ItemId":"107848P","Quantity":1,"VariantRecordId":"5637169770"},{"ItemId":"143762P","Quantity":1,"VariantRecordId":"5637372584"}]}}
   return await HttpClient(`/Commerce/ATP/MFIATPInventoryDynamic?api-version=7.3
@@ -39,23 +382,23 @@ async function getAtpInventoryDynamic(payload) {
   // then the response is used to populate the delivery dates and times
 }
 
-async function addDeliveryCartLine(shoppingCartId: string, payload) {
+async function addDeliveryCartLine(shoppingCartId: string, payload: IAddCartLines) {
   // payload
   // {"cartLines":[{"ProductId":5637148281,"EntryMethodTypeValue":5,"ItemId":"136906","Quantity":1,"DeliveryMode":"Delivery","UnitOfMeasureSymbol":"EA"}]}
   return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/AddCartLines?api-version=7.3`, 'POST', payload)
 }
 
-async function removeDeliveryCartLine(shoppingCartId: string, payload) {
+async function removeDeliveryCartLine(shoppingCartId: string, payload: IRemoveCartLines) {
   // payload
   // {"cartLineIds":["8dffacc8d02e4ee6a62b6e4751697db2"]}
   return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/RemoveCartLines?api-version=7.3`, 'POST', payload)
 }
 
-async function getDeliveryPricing(payload) {
+async function getDeliveryPricing(payload: IGetActivePrices): Promise<IActivePrices> {
   return await HttpClient('/Commerce/Products/GetActivePrices?$top=1000&api-version=7.3', 'POST', payload)
 }
 
-async function updateCartLines(shoppingCartId: string, payload) {
+async function updateCartLines(shoppingCartId: string, payload: IUpdateCartLines) {
   return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/UpdateCartLines?api-version=7.3`, 'POST', payload)
 }
 
@@ -63,7 +406,7 @@ async function updateCartLines(shoppingCartId: string, payload) {
 // also need product info for showing cart lines in delivery info
 
 // Payment Information
-async function getCardPaymentAcceptPoint(shoppingCartId: string, payload) {
+async function getCardPaymentAcceptPoint(shoppingCartId: string, payload: IGetCardPaymentAcceptPoint): Promise<IGetCardPaymentAcceptPointResponse> {
   // payload
   // {"cardPaymentAcceptSettings":{"@odata.type":"#Microsoft.Dynamics.Commerce.Runtime.DataModel.CardPaymentAcceptSettings","HostPageOrigin":"https://mfrm-cit.commerce.dynamics.com","AdaptorPath":"https://mfrm-cit.commerce.dynamics.com/Connectors/","CardPaymentEnabled":false,"CardTokenizationEnabled":true,"HideBillingAddress":true,"TenderTypeId":"Visa;Master Card;American Express;Discover;Debit","PaymentAmount":2471.04},"extensionProperties":[]}
   return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/GetCardPaymentAcceptPoint?api-version=7.3`, 'POST', payload)
@@ -73,7 +416,7 @@ async function getTenderTypes() {
   return await HttpClient(`/Commerce/GetTenderTypes()?$top=15&api-version=7.3`)
 }
 
-async function getRetrieveCardPaymentAcceptResult(shoppingCartId: string, payload) {
+async function getRetrieveCardPaymentAcceptResult(shoppingCartId: string, payload: IRetrieveCardPaymentAcceptResult): Promise<IRetrieveCardPaymentAcceptResultResponse> {
   return await HttpClient(`/Commerce/Carts/RetrieveCardPaymentAcceptResult?api-version=7.3`, 'POST', payload)
   // We get back
 //  {
@@ -103,7 +446,7 @@ async function getRetrieveCardPaymentAcceptResult(shoppingCartId: string, payloa
 // }
 }
 
-async function checkOut(shoppingCartId: string, payload) {
+async function checkOut(shoppingCartId: string, payload: ICheckout) {
   // payload
   // {"receiptEmail":"ken.walton@mfrm.com","cartTenderLines":[{"Amount@odata.type":"#Decimal","Currency":"USD","Amount":2471.04,"TenderTypeId":"5","CardTypeId":"DS","TokenizedPaymentCard":{"IsSwipe":false,"TenderType":"5","CardTokenInfo":{"CardToken":"7ZnfT9swEMffkfgfsryH/GhpBzJBXcO0ThSqpWwMxIPrXFuLxA620zb//ZTWTegAAVKlsSpVXnL39TWpPz7fuejTbTfoDDu36HSRxMYMhKScnZjugWMawAiPKJucmJkaW27LPPX391BHCJxfjgc4T4CpgeApCJUbiyRm8ngh6Yk5VSo9tu35fH4wbxxwMbE9x3Ht6/55SKaQYIsyqTAjYJajotdHmf7+nmGgv753aTQMdIETkCkm4PdBkClmqkMIz5hCduUqAmitH4KYUQJa1YtWunW4nzjOYJin4IdKUDZBdmXRUULFBUQr99Lpu40WHJHPLavhYtdquu22NfJGbQs7Xpu0GhCNwEH203E6YACEJjhexXKQvXG/1mAFWuA4rrW8ho5zvLyQHZTu9UMCyQRV+TnMIPYvOANkhxs2LezJM0ZEniqI/DGOJSD7salUDbCUcy4eiUpLqfkBOLpkcV4FKi2l5huNImCVQt9rf0BlGuP8G9DJVPkusjcNWhXCQwaMwEWWjED4xW+7aSl0yH6OmNcx6nLGgCguXgKoFBR8bYGeq7ADA5x3eZKAIFCGr4kp1mxPfnhiNGddLHQyWeUjDWtBiV/4hvwe2BZ4uW55v26aN9fdr0HnsHf4/bB5RbrDmpYdoyVPt5FcAioJn4Go8dgdPK4YfcigSClbqV7qfFJVI/9hvfKG3aeP5T1EWrgVZlqO63reYvnxPK9Zp5fdSS9FYllV1lsoVmpQin5qN9PK2SKlAivKWZ8zNX2JFt3OPtNJbzS6rld3vv+2833DTlJN+W/AukN+enTyxhn3nKOjes4//JyfY6maAZ1QJV9a4u84K6urhfV62Y2TjS+Y3fciYIqOKVluBqvaIVRY6DPY9QtXJ6nv4KUuID5gAYHs5/8M8O/u/D8=","UniqueCardId":"X62WZ4ZXCFDA5I5J54UcCT","ServiceAccountId":"136e9c86-31a1-4177-b2b7-a027c63edbe0","MaskedCardNumber":"601122xxxxxx2224","@odata.type":"#Microsoft.Dynamics.Commerce.Runtime.DataModel.CardTokenInfo"},"Phone":"860-778-6817","Country":"USA","House":"N/A","Address1":"167 Carriage Way","Address2":"","City":"Windsor","State":"CT","Zip":"06095","NameOnCard":"","CardTypeId":"DS","ExpirationMonth":12,"ExpirationYear":2099,"ExtensionProperties":[],"@odata.type":"#Microsoft.Dynamics.Commerce.Runtime.DataModel.TokenizedPaymentCard"},"ExtensionProperties":[{"Key":"clientIPAddress","Value":{"StringValue":"68.0.221.93"}},{"Key":"forterToken","Value":{"StringValue":"f155a6347ecc451db6382e9be205d531_1708355249960_251_UDF43-m4_15ck__tt"}},{"Key":"userAgent","Value":{"StringValue":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"}},{"Key":"isForterValidationEnabled","Value":{"BooleanValue":true}},{"Key":"isForterValidationEnabledForApplePay","Value":{"BooleanValue":true}}]}],"cartVersion":203661802}
   return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/Checkout?api-version=7.3`, 'POST', payload)
@@ -114,24 +457,25 @@ export default function Checkout() {
   // What checkout step am I on?
   // Make a new checkout cart each time user enters from cart screen
   const [checkoutStep, setCheckoutStep] = useState(1)
-  const [cart, setCart] = useState<object | null>(null)
-  const [atpSlots, setAtpSlots] = useState(null)
-  const [deliveryInfo, setDeliveryInfo] = useState(deliveryInfoFromCms)
+  const [cart, setCart] = useState<ICart | null>(null)
+  const [atpSlots, setAtpSlots] = useState<IMFIATPInventoryDynamic| null>(null)
+  const [deliveryInfo, setDeliveryInfo] = useState<IEnrichedDeliveryInfo[]>(deliveryInfoFromCms as IEnrichedDeliveryInfo[])
   const [selectedDate, setSelectedDate] = useState(null) // default to today
   const [selectedServiceId, setSelectedServiceId] = useState(1)
-  const [customerInfo, setCustomerInfo] = useState(null)
-  const [cardPaymentSettings, setCardPaymentSettings] = useState(null)
-  const [tokenizedPaymentCardInfo, setTokenizedPaymentCardInfo] = useState(null)
+  const [customerInfo, setCustomerInfo] = useState<IShippingAddress | null>(null)
+  const [cardPaymentSettings, setCardPaymentSettings] = useState<IGetCardPaymentAcceptPointResponse | null>(null)
+  const [tokenizedPaymentCardInfo, setTokenizedPaymentCardInfo] = useState<IRetrieveCardPaymentAcceptResultTokenizedPaymentCard | null>(null)
+ 
 
   // need a ref for sibling to sibling communication
-  const [childRef, setChildRef] = useState(null)
+  const [childRef, setChildRef] = useState<RefObject<HTMLButtonElement> | undefined>(undefined)
 
-  const handleRef = (ref) => {
+  const handleRef = (ref: MutableRefObject<HTMLButtonElement | null>) => {
     setChildRef(ref)
   }
 
-  const handleCustomerInfo = useCallback(async (payload) => {
-    await submitCustomerInfo(cart.Id, payload)
+  const handleCustomerInfo = useCallback(async (payload: ICustomerInfo) => {
+    await submitCustomerInfo(cart!.Id, payload)
     await getAtpSlotsAndSetDatePicker()
     setCustomerInfo(payload.ShippingAddress)
     setCheckoutStep(2)
@@ -145,7 +489,7 @@ export default function Checkout() {
 
     // iterate cart lines, ItemId is used for ItemId, ProductId is used for VariantRecordId
     // { ItemId: '107848P', Quantity: 1, VariantRecordId: '5637169770' }
-    const lineItems = cart.CartLines.map((x) => ({
+    const lineItems = cart!.CartLines.map((x: ICartLine) => ({
       ItemId: x.ItemId,
       Quantity: 1,
       VariantRecordId: x.ProductId.toString()
@@ -170,9 +514,10 @@ export default function Checkout() {
     setAtpSlots(atpSlots)
   }
 
+
   // TODO: Should use info from Customer Info here
   // Is DeliveryPreferenceTypeValue silver, gold, or platinum?
-  function buildPreliminaryDeliveryPayload(cart) {
+  function buildPreliminaryDeliveryPayload(cart: ICart): IUpdateLineDeliverySpecifications {
     const lines = cart.CartLines.map(x => {
       return {
         LineId: `${x.LineId}`,
@@ -197,7 +542,7 @@ export default function Checkout() {
     }
   }
 
-  function builDeliveryPricePayload() {
+  function builDeliveryPricePayload(): IGetActivePrices {
     return {
       projectDomain: { ChannelId: 5637154326, CatalogId: 0 },
       productIds: [5637148201, 5637148281, 5637149119, 5637149117, 5637148272],
@@ -230,13 +575,13 @@ export default function Checkout() {
     const payload = builDeliveryPricePayload()
     const res = await getDeliveryPricing(payload)
     // take the pricing from the result and add it into delivery info from cms
-    const enrichedDeliveryInfo = [...deliveryInfo]
+    const enrichedDeliveryInfo  = [...deliveryInfo]
     enrichedDeliveryInfo.forEach(x => x.priceInfo = res.value.filter(r => r.ItemId === x.serviceSku)[0])
     setDeliveryInfo(enrichedDeliveryInfo)
   }
 
   // Before we add the delivery cart line we need to check if we already have one, if so , remove it first
-  function buildDeliveryLineItemPayload(itemId) {
+  function buildDeliveryLineItemPayload(itemId: string) {
     // We should get delivery options from calling /Commerce/Products/GetDeliveryOptions?$top=1000&api-version=7.3
     // and then you get back the different delivery options for each item you passed in
 
@@ -257,19 +602,19 @@ export default function Checkout() {
     return {
       cartLines: [
         {
-          ProductId: foundIndex?.serviceProductRecId,
+          ProductId: foundIndex!.serviceProductRecId,
           EntryMethodTypeValue: 5,
           ItemId: itemId,
           Quantity: 1,
           DeliveryMode: 'Delivery',
           UnitOfMeasureSymbol: 'EA',
-          Price: foundIndex?.priceInfo?.AdjustedPrice
+          Price: foundIndex!.priceInfo.AdjustedPrice
         }
       ]
     }
   }
 
-  function buildGetCardPaymentAcceptPointPayload(paymentAmount) {
+  function buildGetCardPaymentAcceptPointPayload(paymentAmount: number): IGetCardPaymentAcceptPoint {
     // What happens in the adaptor path? https://mfrm-cit.commerce.dynamics.com/Connectors/
     // if you reach with browser, you get a 404
     return {
@@ -348,14 +693,14 @@ export default function Checkout() {
     return cart?.CartLines.find(cl => cl.ItemTaxGroupId === 'DELV')?.LineId
   }
 
-  function newDateFromAtpDateString(dateString) {
+  function newDateFromAtpDateString(dateString: string) {
     // dateString '1/29/2024 12:00:00 AM'
     const dateInput = dateString.split(' ')[0]
     return new Date(dateInput)
   }
 
-  function shippingMessage(dateString, startTime, endTime) {
-    const options = {
+  function shippingMessage(dateString: string, startTime: string, endTime: string) {
+    const options: Intl.DateTimeFormatOptions = {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
@@ -368,7 +713,7 @@ export default function Checkout() {
     return `Arrives ${weekDay}, ${monthAndDay} at ${startTime} - ${endTime}`
   }
 
-  function dateToIsoStringNoZ(dateString) {
+  function dateToIsoStringNoZ(dateString: string) {
     const deliveryDate = newDateFromAtpDateString(dateString)
     const year = deliveryDate.getFullYear()
     const month = deliveryDate.getMonth()
@@ -378,13 +723,13 @@ export default function Checkout() {
     return formatted.toISOString().split('Z')[0]
   }
 
-  function deliveryServiceNameFromItemId(itemId) {
-    return deliveryInfo.find(x => x.serviceId === itemId)?.serviceName
+  function deliveryServiceNameFromItemId(itemId: string) {
+    return deliveryInfo.find(x => x.serviceId === +itemId)?.serviceName
   }
 
-  function buildCartLinesWithShippingDateAndTimePayload(cartLines, date, deliveryServiceName) {
+  function buildCartLinesWithShippingDateAndTimePayload(cartLines: ICartLine[], date: string, deliveryServiceName: string): IUpdateShippingDateTimeCartLine[] {
     // match the date with the ATP slot info
-    const atpInfo = atpSlots.ATPInventoryDynamicData.find(x => x.Date === date)
+    const atpInfo = atpSlots?.ATPInventoryDynamicData.find(x => x.Date === date)
     //then set all those attributes on each cart line
     // I guess sometimes the payload can be partial?
     let payload = cartLines.map((cl) => {
@@ -398,34 +743,38 @@ export default function Checkout() {
       }
     })
     // Include delivery line item when iterating and setting attributes
+    // TODO: do not put on delivery item
+    // NOTE: you have to have the odata bah blah in each one or the call will fail
     for (const cl of payload) {
-      cl.AttributeValues.push(buildAttribute('Ecom_DSZoneLineId', atpInfo.ATPSlots[0].Zone))
-      cl.AttributeValues.push(buildAttribute('Ecom_InventLocationId', atpInfo.ATPSlots[0].Location1))
-      cl.AttributeValues.push(buildAttribute('Ecom_ShippingMessage', shippingMessage(atpInfo.Date, atpInfo.ATPSlots[0].StartTime, atpInfo.ATPSlots[0].EndTime)))
-      cl.AttributeValues.push(buildAttribute('Ecom_DeliveryDate', dateToIsoStringNoZ(atpInfo.Date)))
-      cl.AttributeValues.push(buildAttribute('Ecom_StartTime', atpInfo.ATPSlots[0].StartTime))
-      cl.AttributeValues.push(buildAttribute('Ecom_EndTime', atpInfo.ATPSlots[0].EndTime))
+      if (cl.ItemTaxGroupId === 'DELV') continue
+      cl.AttributeValues.push(buildAttribute('Ecom_DSZipCode', '06095'))
+      cl.AttributeValues.push(buildAttribute('Ecom_DSZoneLineId', atpInfo!.ATPSlots[0].Zone))
+      cl.AttributeValues.push(buildAttribute('Ecom_InventLocationId', atpInfo!.ATPSlots[0].Location1))
+      cl.AttributeValues.push(buildAttribute('Ecom_ShippingMessage', shippingMessage(atpInfo!.Date, atpInfo!.ATPSlots[0].StartTime, atpInfo!.ATPSlots[0].EndTime)))
+      cl.AttributeValues.push(buildAttribute('Ecom_DeliveryDate', dateToIsoStringNoZ(atpInfo!.Date)))
+      cl.AttributeValues.push(buildAttribute('Ecom_StartTime', atpInfo!.ATPSlots[0].StartTime))
+      cl.AttributeValues.push(buildAttribute('Ecom_EndTime', atpInfo!.ATPSlots[0].EndTime))
       cl.AttributeValues.push(buildAttribute('Ecom_DeliveryService', deliveryServiceName))
-      cl.AttributeValues.push(buildAttribute('Ecom_DeliveryTime', `${atpInfo.ATPSlots[0].StartTime} - ${atpInfo.ATPSlots[0].EndTime}`))
+      cl.AttributeValues.push(buildAttribute('Ecom_DeliveryTime', `${atpInfo!.ATPSlots[0].StartTime} - ${atpInfo!.ATPSlots[0].EndTime}`))
     }
     // we also need to add a bunch of other shit like Ecom_RevenueCategory, Ecom_VariantId, Ecom_DSZipCode, Ecom_ProductNameWithBrand, Ecom_ProductType, brandName, categoryName, Ecom_WillCallDateExists, Ecom_DSDeliveryScheduleStatus, 
     return payload
   }
   // TODO: see why this is malformed, look at payload from src/modules/mfrm-checkout-payment-instrument/mfrm-checkout-payment-instrument.tsx that goes to retrieveCardPaymentAcceptResultAsync
-  async function handlePreCheckout(encodedCardInfo) {
+  async function handlePreCheckout(encodedCardInfo: string) {
     const cardInfoString = atob(encodedCardInfo)
     const cardInfoObject = JSON.parse(cardInfoString)
     console.log('cardInfoObject',cardInfoObject)
-    const payload = {
+    const payload: IRetrieveCardPaymentAcceptResult = {
       resultAccessCode: encodedCardInfo,
       extensionProperties: [],
-      cartId: cart.Id,
+      cartId: cart!.Id,
       settings: {
         ReturnUrl: window.location.href,
-        PaymentConnectorId: cardPaymentSettings.PaymentConnectorId
+        PaymentConnectorId: cardPaymentSettings!.PaymentConnectorId
       }
     }
-    const res = await getRetrieveCardPaymentAcceptResult(cart.Id, payload)
+    const res = await getRetrieveCardPaymentAcceptResult(cart!.Id, payload)
     console.log('res', res)
     setTokenizedPaymentCardInfo(res.TokenizedPaymentCard)
   }
@@ -433,15 +782,15 @@ export default function Checkout() {
   async function handleCheckout() {
     const payload = buildCheckoutPayload()
     console.log('TODO: call checkout', payload)
-    const res = await checkOut(cart.Id, payload)
+    const res = await checkOut(cart!.Id, payload)
     console.log('checkout res', res)
     router.push(`/order-confirmation?id=${res.Id}`)
 
   }
-  const cardNamesToTwoChars = new Map()
-  cardNamesToTwoChars.set('Discover', 'DS')
+  // const cardNamesToTwoChars = new Map()
+  // cardNamesToTwoChars.set('Discover', 'DS')
 
-  function buildCheckoutPayload() {
+  function buildCheckoutPayload(): ICheckout {
     // first we need to call RetrieveCardPaymentAcceptResult to get back a tokenized card
     // which is silly as we have enough info to let back-end handle the it with what we have already
     // get tokenized card info from state
@@ -450,13 +799,13 @@ export default function Checkout() {
       cartTenderLines: [
         {
           Currency: "USD",
-          Amount: cart.TotalAmount,
+          Amount: cart!.TotalAmount,
           TenderTypeId: "5",
-          CardTypeId: tokenizedPaymentCardInfo.CardTypeId,
+          CardTypeId: tokenizedPaymentCardInfo!.CardTypeId,
           TokenizedPaymentCard: {
             IsSwipe: false,
             TenderType: "5",
-            CardTokenInfo: tokenizedPaymentCardInfo.CardTokenInfo,
+            CardTokenInfo: tokenizedPaymentCardInfo!.CardTokenInfo,
             Phone: "860-778-6817",
             Country: "USA",
             House: "N/A",
@@ -466,9 +815,9 @@ export default function Checkout() {
             State: "CT",
             Zip: "06095",
             NameOnCard: "Kenneth Walton",
-            CardTypeId: tokenizedPaymentCardInfo.CardTypeId,
-            ExpirationMonth: tokenizedPaymentCardInfo.ExpirationMonth,
-            ExpirationYear: tokenizedPaymentCardInfo.ExpirationYear,
+            CardTypeId: tokenizedPaymentCardInfo!.CardTypeId,
+            ExpirationMonth: tokenizedPaymentCardInfo!.ExpirationMonth,
+            ExpirationYear: tokenizedPaymentCardInfo!.ExpirationYear,
             ExtensionProperties: [],
           },
           ExtensionProperties: [
@@ -495,20 +844,20 @@ export default function Checkout() {
           ]
         }
       ],
-      cartVersion: cart.Version
+      cartVersion: cart!.Version
     };
     
   }
 
-  async function handleDelivery(itemId, date) {
+  async function handleDelivery(itemId: string, date: string) {
     // do we already have a delivery line item?
     if (hasDeliveryCartLine()) {
       const lineIdToRemove = deliveryCartLineId()
-      await removeDeliveryCartLine(cart.Id, lineIdToRemove)
+      await removeDeliveryCartLine(cart!.Id, {cartLineIds:[`${lineIdToRemove}`]})
       // TODO: you also need to clear out delivery attributes on each cartline
     }
     const deliveryLineItemPayload = buildDeliveryLineItemPayload(itemId)
-    const updatedCart = await addDeliveryCartLine(cart.Id, deliveryLineItemPayload) // returns updated cart
+    const updatedCart = await addDeliveryCartLine(cart!.Id, deliveryLineItemPayload) // returns updated cart
     // maybe use entire ATP info as value on date/time select to not have to find it all later
     // then we need to update info on each line item after adding it using UpdateCartLines api
     // if this item is to be delivered (not drop ship or small parcel)
@@ -524,21 +873,21 @@ export default function Checkout() {
 
     // AttributeValues is an empty array on the cart until...
     const deliveryServiceName = deliveryServiceNameFromItemId(itemId)
-    const updateCartLinesPayload = buildCartLinesWithShippingDateAndTimePayload(updatedCart.CartLines, date, deliveryServiceName)
+    const updateCartLinesPayload = buildCartLinesWithShippingDateAndTimePayload(updatedCart.CartLines, date, deliveryServiceName!)
     // Now call update cart lines with updateCartLinesPayload, await it and then
-    const anotherCartUpdate = await updateCartLines(cart.Id, { cartLines: updateCartLinesPayload })
+    const anotherCartUpdate = await updateCartLines(cart!.Id, { cartLines: updateCartLinesPayload })
     setCart(anotherCartUpdate)
     setCheckoutStep(3)
     const cardPaymentSettingsPayload = buildGetCardPaymentAcceptPointPayload(anotherCartUpdate.TotalAmount)
-    const cardPaymentSettingsResponse = await getCardPaymentAcceptPoint(cart.Id, cardPaymentSettingsPayload)
+    const cardPaymentSettingsResponse = await getCardPaymentAcceptPoint(cart!.Id, cardPaymentSettingsPayload)
     setCardPaymentSettings(cardPaymentSettingsResponse)
     router.push('/checkout?step=payment')
   }
 
   function buildAttribute(name: string, textValue: string) {
+    // NOTE: Why do we have to have a decorator on this or it will fail on back-end?
     return {
-      '@odata.type':
-        '#Microsoft.Dynamics.Commerce.Runtime.DataModel.AttributeTextValue',
+      "@odata.type": "#Microsoft.Dynamics.Commerce.Runtime.DataModel.AttributeTextValue",
       ExtensionProperties: [],
       Name: name,
       TextValue: textValue,

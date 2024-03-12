@@ -1,16 +1,33 @@
 'use client'
 import CartLineItem from './cart-line-item'
+import { ICartLine, IUpdateQuantityPayload } from '@/types/cart'
+import { IProduct } from '@/types/product'
 
-export default function CartLineItems({ cartLineItems, products, onQuantityChange, isUpdating }) {
+interface ICartLineItemsProps {
+  cartLineItems: ICartLine[]
+  products: IProduct[]
+  onQuantityChange: (body: IUpdateQuantityPayload) => {}
+  isUpdating: boolean
+}
+
+interface ICompositeData {
+  cartLine: ICartLine
+  product: IProduct
+}
+
+export default function CartLineItems({
+  cartLineItems,
+  products,
+  onQuantityChange,
+  isUpdating
+}: ICartLineItemsProps) {
   // We need cart and products info on each line item
   // might also need product attributes...
-  const compositeData = cartLineItems.reduce((acc, cur) => {
+  const compositeData = cartLineItems.reduce((acc: ICompositeData[], cur) => {
     const productInfo = products.filter((p) => p.RecordId === cur.ProductId)
     acc.push({ cartLine: cur, product: productInfo[0] })
     return acc
   }, [])
-
-  console.log('compositeData', compositeData)
 
   return (
     <ul>

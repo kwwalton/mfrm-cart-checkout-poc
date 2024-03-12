@@ -1,6 +1,10 @@
 import Image from 'next/image'
 
-export default function CartLineImage({ src }) {
+interface ICartLineImageProps {
+  src: string
+}
+
+  export default function CartLineImage({ src }: ICartLineImageProps) {
   const root =
     'https://images-us-prod.cms.commerce.dynamics.com/cms/api/czjhmjzmzc/imageFileData/search?fileName=/'
   const encodedSrc = encodeURIComponent(src)
