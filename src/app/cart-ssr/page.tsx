@@ -5,6 +5,7 @@ import CartLineItemsSsr from '@/components/cart/cart-line-items-ssr'
 import Stepper from '@/components/stepper'
 import { ICart } from '@/types/cart'
 import { IProducts } from '@/types/product'
+import { Suspense } from 'react'
 
 async function getCart(cartId: string): Promise<ICart> {
   return await HttpClient(`/Commerce/Carts('${cartId}')?api-version=7.3`)
@@ -50,13 +51,13 @@ export default async function CartPageSsr({ searchParams }: NextPageProps) {
       </div>
       <div className="body grid grid-cols-4 lg:grid-cols-4 gap-4">
         <div className="body__cart-items col-span-4 lg:col-span-3">
-          {cart && products && (
+          <Suspense fallback={<div>Cart is updating....</div>} >
             <CartLineItemsSsr
               cartId={cartId}
               cartLineItems={cart.CartLines}
               products={products.value}
             />
-          )}
+          </Suspense>
         </div>
         <div className="body__order-summary col-span-4 lg:col-span-1">
           {cart && <OrderSummary cart={cart} />}
