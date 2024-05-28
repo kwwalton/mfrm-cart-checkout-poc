@@ -26,6 +26,10 @@ export default async function HttpClient(
     requestOptions.body = JSON.stringify(body)
   }
 
+  // await new Promise((resolve) =>
+  //   setTimeout(resolve, (Math.random() + 1) * 4000)
+  // )
+
   try {
     const response = await fetch(baseUrl + url, requestOptions)
     console.log(response)
