@@ -5,11 +5,31 @@ import { IProduct } from '@/types/product'
 import HttpClient from '@/HttpClient'
 import CartLineDelivery from './cart-line-delivery'
 import { Suspense } from 'react'
-import { getProductsById, getCart } from '@/app/cart-ssr/page'
+import { IProducts } from '@/types/product'
+
+//import { getProductsById, getCart } from '@/app/cart-ssr/page'
 
 interface ICartLineItemSsrProps {
   cartId: string
   cartLine: ICartLine
+}
+
+// duplicated from cart page 
+async function getCart(cartId: string): Promise<ICart> {
+  return await HttpClient(`/Commerce/Carts('${cartId}')?api-version=7.3`)
+}
+
+// duplicated from cart page 
+async function getProductsById(products: number[]): Promise<IProducts> {
+  const body = {
+    channelId: 5637154326,
+    productIds: products
+  }
+  return await HttpClient(
+    '/Commerce/Products/GetByIds?$top=1000&api-version=7.3',
+    'POST',
+    body
+  )
 }
 
 async function getAttributeValues(productId: number): Promise<any> {
@@ -27,6 +47,7 @@ export const getProductAndAttributes = async (
     return acc
   }, [])
 
+  // NOTE: maybe we don't wait for both product info and attributes, so product info can render quicker?
   const [products, attributes] = await Promise.all([
     getProductsById(productList),
     getAttributeValues(cartLine.ProductId)
@@ -47,11 +68,7 @@ export default async function CartLineItemSsr({
   const cart = await getCart(cartId)
   const [product, attributes] = await getProductAndAttributes(cart, cartLine)
 
-  await new Promise((resolve) =>
-    setTimeout(resolve, (Math.random() + 1) * 3000)
-  )
-
-  const returnValue = (
+  return (
     <li className="border-b-2 my-5 pb-5">
       <p>Line Item Id: {cartLine.ItemId}</p>
       <p>Quantity: {cartLine.Quantity}</p>
@@ -59,8 +76,8 @@ export default async function CartLineItemSsr({
       <CartLineImage src={product?.PrimaryImageUrl || ''} />
       <p>{product?.Name}</p>
       <p>{formattedPrice}</p>
-      <p>Result: {attributes.value[0].Name}</p>
-      <Suspense fallback={<p>Yury!!!!!</p>}>
+      {/* <p>Result: {attributes.value[0].Name}</p> */}
+      <Suspense fallback={<p>Loading delivery information...</p>}>
         <CartLineDelivery
           productId={cartLine.ProductId}
           itemId={product?.ItemId || ''}
@@ -76,7 +93,6 @@ export default async function CartLineItemSsr({
       <CartLineQuantitySsr cartId={cartId} cartLine={cartLine} />
     </li>
   )
-  return returnValue
 }
 
 // TODO: rename to cart-line

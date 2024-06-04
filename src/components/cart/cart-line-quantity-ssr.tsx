@@ -27,8 +27,8 @@ export default function CartLineQuantitySsr({
   // This should be at the cart level and we update the entire cart based on the result
   async function updateQuantity(num: number) {
     setIsUpdating(true)
-    addOptimisticCount(num)
-    await updateCartAction(cartId, {LineId: cartLine.LineId, Quantity: cartLine.Quantity+ num})
+    if (num) addOptimisticCount(num)
+    await updateCartAction(cartId, {LineId: cartLine.LineId, Quantity: cartLine.Quantity += num})
     setIsUpdating(false)
     router.refresh()
   }
@@ -39,7 +39,7 @@ export default function CartLineQuantitySsr({
         - Remove
       </button>
       <span className="m-3">{optimisticCount}</span>
-      <button  onClick={() => updateQuantity(1)} disabled={isUpdating}>
+      <button onClick={() => updateQuantity(1)} disabled={isUpdating}>
         + Add
       </button>
     </div>

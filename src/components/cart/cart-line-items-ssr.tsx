@@ -1,6 +1,6 @@
 import CartLineItemSsr from './cart-line-item-ssr'
 import { ICartLine } from '@/types/cart'
-import { IProduct } from '@/types/product'
+//import { IProduct } from '@/types/product'
 import { Suspense } from 'react'
 
 interface ICartLineItemsSsrProps {
@@ -9,15 +9,15 @@ interface ICartLineItemsSsrProps {
   //products: IProduct[]
 }
 
-interface ICompositeData {
-  cartLine: ICartLine
-  //product: IProduct
-}
+// interface ICompositeData {
+//   cartLine: ICartLine
+//   product: IProduct
+// }
 
 export default function CartLineItemsSsr({
   cartId,
-  cartLineItems,
-}: ICartLineItemsSsrProps) {
+  cartLineItems
+}: Readonly<ICartLineItemsSsrProps>) {
   // We need cart and products info on each line item
   // might also need product attributes...
   // const compositeData = cartLineItems.reduce((acc: ICompositeData[], cur) => {
@@ -28,15 +28,14 @@ export default function CartLineItemsSsr({
 
   return (
     <ul>
-      {
-        cartLineItems.map((item) => (
-          <Suspense fallback={<p>Anything...</p>} key={item.LineId}>
-          <CartLineItemSsr
-            cartId={cartId}
-            cartLine={item}
-          />
-          </Suspense>
-        ))}
+      {cartLineItems.map((item) => (
+        <Suspense
+          fallback={<p>Loading product by ids and attributes...</p>}
+          key={item.LineId}
+        >
+          <CartLineItemSsr cartId={cartId} cartLine={item} />
+        </Suspense>
+      ))}
     </ul>
   )
 }
