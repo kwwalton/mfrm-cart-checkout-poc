@@ -1,13 +1,14 @@
 import Link from 'next/link'
-import { ICart } from '@/types/cart'
-import React  from 'react'
-interface IOrderSummaryProps {
-  cart: ICart
+import React from 'react'
+import { ExtendedCart } from '@/services/bh/cart/get-async-cart'
+interface IProps {
+  cart: ExtendedCart
 }
 
-export default function OrderSummary({
+export default function Summary({
   cart,
-}: Readonly<IOrderSummaryProps>) {
+}: Readonly<IProps>) {
+  // TODO: Display tax, delivery, mattress recycling fee
   function formatPrice(price: number) {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -17,10 +18,10 @@ export default function OrderSummary({
   return (
     <div className="-mx-5 p-5 bg-gray-100">
       <p>
-        Items ({cart.TotalItems}) {formatPrice(cart.NetPrice)}
+        Items ({cart.count}) {formatPrice(cart.total)}
       </p>
-      <p>Savings -{formatPrice(cart.DiscountAmount)}</p>
-      <p className="font-bold">Subtotal {formatPrice(cart.SubtotalAmount)}</p>
+      <p>Savings -{formatPrice(cart.total-cart.subTotal)}</p>
+      <p className="font-bold">Subtotal {formatPrice(cart.subTotal)}</p>
       <hr className="mt-2 mb-5" />
         <Link
           href="/checkout?step=customer-info"

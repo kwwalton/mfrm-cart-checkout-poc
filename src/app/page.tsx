@@ -29,6 +29,14 @@ export default function Home() {
               Cart Page SSR
             </Link>
           </li>
+          <li className="ml-5">
+            <Link
+              className="mt-4 px-4 py-2 font-semibold text-sm bg-red text-white rounded-md shadow-sm opacity-100"
+              href="/cart-ssr-bh"
+            >
+              Cart Page BedHub SSR
+            </Link>
+          </li>
         </ul>
       </div>
     </main>

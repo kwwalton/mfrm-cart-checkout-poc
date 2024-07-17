@@ -1,0 +1,15 @@
+query GetCartDelivery($cartId: ID!, $zipCode: ZipCode!) {
+  cart(cartId: $cartId) {
+    id
+    items {
+      id
+      variantDelivery(zip: $zipCode) {
+        end
+        label
+        start
+      }
+      variantInMarket(zip: $zipCode)
+      variantInStock(zip: $zipCode)
+    }
+  }
+}

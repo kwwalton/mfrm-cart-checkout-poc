@@ -2,10 +2,11 @@ import CartLineItemSsr from './cart-line-item-ssr'
 import { ICartLine } from '@/types/cart'
 //import { IProduct } from '@/types/product'
 import { Suspense } from 'react'
+import { ICartItemLine } from '@/services/csu/cart/get-async-cart'
 
 interface ICartLineItemsSsrProps {
   cartId: string
-  cartLineItems: ICartLine[]
+  cartLineItems: ICartItemLine[]
   //products: IProduct[]
 }
 
@@ -30,7 +31,7 @@ export default function CartLineItemsSsr({
     <ul>
       {cartLineItems.map((item) => (
         <Suspense
-          fallback={<p>Loading product by ids and attributes...</p>}
+          fallback={<li className="border-b-2 my-5 pb-5"><p /></li>}
           key={item.LineId}
         >
           <CartLineItemSsr cartId={cartId} cartLine={item} />
