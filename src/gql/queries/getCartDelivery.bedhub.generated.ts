@@ -1,0 +1,13 @@
+import * as Types from '@/gql/__generated__/types';
+
+import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+export type GetCartDeliveryQueryVariables = Types.Exact<{
+  cartId: Types.Scalars['ID']['input'];
+  zipCode: Types.Scalars['ZipCode']['input'];
+}>;
+
+
+export type GetCartDeliveryQuery = { __typename?: 'Query', cart: { __typename?: 'Cart', id: string, items: Array<{ __typename?: 'CartItem', id: string, variantInMarket: boolean, variantInStock: boolean, variantDelivery: { __typename?: 'LocalDateRange', end: string, label: string, start: string } | null }> } };
+
+
+export const GetCartDeliveryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetCartDelivery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cartId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"zipCode"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ZipCode"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cart"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cartId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cartId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"variantDelivery"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"zip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"zipCode"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"end"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"start"}}]}},{"kind":"Field","name":{"kind":"Name","value":"variantInMarket"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"zip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"zipCode"}}}]},{"kind":"Field","name":{"kind":"Name","value":"variantInStock"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"zip"},"value":{"kind":"Variable","name":{"kind":"Name","value":"zipCode"}}}]}]}}]}}]}}]} as unknown as DocumentNode<GetCartDeliveryQuery, GetCartDeliveryQueryVariables>;
