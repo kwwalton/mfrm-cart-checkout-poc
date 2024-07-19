@@ -139,8 +139,12 @@ type Cart {
     id: String!
     "Cart Item"
     items: [CartItem!]!
+    "Recycling fee"
+    recyclingFee: NonNegativeFloat!
     "Product total"
     subTotal: PositiveFloat!
+    "Sales tax"
+    tax: NonNegativeFloat!
     "Grand Total"
     total: PositiveFloat!
 }

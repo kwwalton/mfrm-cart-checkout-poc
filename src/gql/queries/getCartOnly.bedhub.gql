@@ -1,46 +1,49 @@
 query GetCartOnly($cartId: ID!) {
-  cart(cartId: $cartId) {
-    count
-    coupons {
-      id
-      type
-    }
-    discount
-    id
-    items {
-      categoryId
-      categoryName
-      categoryUrl
-      count
-      coupons {
+    cart(cartId: $cartId) {
         id
-        type
-      }
-      id
-      price
-      productBadges {
-        label
-        type
-      }
-      productBrand
-      productEyebrow
-      productId(type: DYNAMICS)
-      itemID: productId(type: MFRM)
-      productImage
-      productName
-      productPromo
-      productRating
-      productRatingCount
-      productUrl
-      variantAttributes
-      barCode: variantId(type: MFRM)
-      variantId(type: DYNAMICS)
-      variantOriginalPrice
-      variantPrice
-      variantType
-      variantUrl
+        dynamicsVersion
+        count
+        coupons {
+            id
+            type
+        }
+        discount
+        recyclingFee
+        tax
+        subTotal
+        total
+        items {
+            categoryId
+            categoryName
+            categoryUrl
+            count
+            coupons {
+                id
+                type
+            }
+            id
+            price
+            productBadges {
+                label
+                type
+            }
+            productBrand
+            productEyebrow
+            productId(type: DYNAMICS)
+            itemID: productId(type: MFRM)
+            productImage
+            productName
+            productPromo
+            productRating
+            productRatingCount
+            productUrl
+            variantAttributes
+            barCode: variantId(type: MFRM)
+            variantId(type: DYNAMICS)
+            variantOriginalPrice
+            variantPrice
+            variantType
+            variantUrl
+        }
     }
-    subTotal
-    total
-  }
 }

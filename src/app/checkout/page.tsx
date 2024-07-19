@@ -6,7 +6,7 @@ import DeliveryInfo from '@/components/checkout/delivery-info'
 import PaymentInfo from '@/components/checkout/payment-info'
 import OrderSummary from '@/components/order-summary'
 import Stepper from '@/components/stepper'
-import { useState, useEffect, useRef, useCallback, RefObject, MutableRefObject } from 'react'
+import { MutableRefObject, RefObject, useCallback, useEffect, useState } from 'react'
 import getCookieValueOnClient from '@/utils/clientCookies'
 import { deliveryInfoFromCms } from '@/delivery-info'
 import { useRouter } from 'next/navigation'
@@ -53,14 +53,14 @@ export interface ICustomerInfo {
 
 interface IShippingAddress {
   Name: string
-    AddressTypeValue: number
-    City: string
-    State: string
-    Street: string
-    ThreeLetterISORegionName: string
-    TwoLetterISORegionName: string
-    ZipCode: string
-    Phone: string
+  AddressTypeValue: number
+  City: string
+  State: string
+  Street: string
+  ThreeLetterISORegionName: string
+  TwoLetterISORegionName: string
+  ZipCode: string
+  Phone: string
 }
 
 interface IAtpInventoryDynamic {
@@ -74,6 +74,7 @@ interface IAtpInventoryDynamic {
     ItemLines: IAtpInventoryDynamicItemLine[]
   }
 }
+
 interface IAtpInventoryDynamicItemLine {
   ItemId: string
   Quantity: number
@@ -128,32 +129,33 @@ interface IGetActivePrices {
   affiliationLoyaltyTiers: any[]
   includeSimpleDiscountsInContextualPrice: true
 }
+
 interface IActivePrices {
   value: IActivePrice[]
 }
 
 interface IActivePrice {
-    "ProductId": number
-    "ListingId": number
-    "BasePrice": number
-    "TradeAgreementPrice": number
-    "AdjustedPrice": number
-    "MaxVariantPrice": number
-    "MinVariantPrice": number
-    "CustomerContextualPrice": number
-    "DiscountAmount": number
-    "CurrencyCode": string
-    "ItemId": string,
-    "UnitOfMeasure": string
-    "ValidFrom": string
-    "ProductLookupId": number
-    "ChannelId": number,
-    "CatalogId": number
-    "SalesAgreementPrice": number
-    "PriceSourceTypeValue": number
-    "DiscountLines": any[]
-    "AttainablePriceLines": any[]
-    "ExtensionProperties": any[]
+  'ProductId': number
+  'ListingId': number
+  'BasePrice': number
+  'TradeAgreementPrice': number
+  'AdjustedPrice': number
+  'MaxVariantPrice': number
+  'MinVariantPrice': number
+  'CustomerContextualPrice': number
+  'DiscountAmount': number
+  'CurrencyCode': string
+  'ItemId': string,
+  'UnitOfMeasure': string
+  'ValidFrom': string
+  'ProductLookupId': number
+  'ChannelId': number,
+  'CatalogId': number
+  'SalesAgreementPrice': number
+  'PriceSourceTypeValue': number
+  'DiscountLines': any[]
+  'AttainablePriceLines': any[]
+  'ExtensionProperties': any[]
 }
 
 interface IUpdateCartLines {
@@ -253,6 +255,7 @@ interface IRetrieveCardPaymentAcceptResultTokenizedPaymentCard {
   }
   ExtensionProperties: []
 }
+
 interface ICheckout {
   receiptEmail: string
   cartTenderLines: [
@@ -292,7 +295,7 @@ interface ICheckout {
 
 interface ICheckoutExtensionProperty {
   Key: string
-  Value: { StringValue: string } | { BooleanValue: boolean}
+  Value: { StringValue: string } | { BooleanValue: boolean }
 }
 
 export interface IDeliveryInfo {
@@ -326,9 +329,11 @@ interface IDeliveryChildService {
   excludeZipCode: boolean
   alternativeSolution: boolean
 }
+
 export interface IEnrichedDeliveryInfo extends IDeliveryInfo {
   priceInfo: IActivePrice
 }
+
 interface IATPSlot {
   Location1: string
   Zone: string
@@ -344,6 +349,7 @@ interface IATPSlot {
   IsTranscity: boolean
   IsNationWide: boolean
 }
+
 interface IMFIATPInventoryDynamicItem {
   Date: string
   AvailableSlots: string
@@ -359,13 +365,13 @@ const defaultCartCookie = '79dd3d1d-8236-4a36-8451-bd7c67d40d72'
 // Customer Information
 async function getCheckoutCart(shoppingCartId: string) {
   const body = { targetCartType: 2 }
-  return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/Copy?api-version=7.3`, 'POST', body);
+  return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/Copy?api-version=7.3`, 'POST', body)
 }
 
 async function setPreliminaryDelivery(shoppingCartId: string, payload: IUpdateLineDeliverySpecifications) {
   // payload
   // {"lineDeliverySpecifications":[{"LineId":"632084d09d544c308c1b833ec35a106d","DeliverySpecification":{"DeliveryModeId":"Delivery","DeliveryPreferenceTypeValue":1,"DeliveryAddress":{"Name":"","AddressTypeValue":6,"City":"windsor","State":"CT","Street":"","ZipCode":"06095","ThreeLetterISORegionName":"USA","TaxGroup":"VertexAR"}}},{"LineId":"36e16826ecb6470da6f375f20b022d54","DeliverySpecification":{"DeliveryModeId":"Delivery","DeliveryPreferenceTypeValue":1,"DeliveryAddress":{"Name":"","AddressTypeValue":6,"City":"windsor","State":"CT","Street":"","ZipCode":"06095","ThreeLetterISORegionName":"USA","TaxGroup":"VertexAR"}}}]}
-  return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/UpdateLineDeliverySpecifications?api-version=7.3`, 'POST', payload);
+  return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/UpdateLineDeliverySpecifications?api-version=7.3`, 'POST', payload)
 }
 
 async function submitCustomerInfo(shoppingCartId: string, payload: ICustomerInfo) {
@@ -452,20 +458,53 @@ async function checkOut(shoppingCartId: string, payload: ICheckout) {
   return await HttpClient(`/Commerce/Carts('${shoppingCartId}')/Checkout?api-version=7.3`, 'POST', payload)
 }
 
+function buildPayloadForAtpSlots(cart: ICart) {
+  // '01/29/2024'
+  const today = new Date().toLocaleString('en-US', { timeZone: 'UTC' })
+  const formattedToday = today.split(',')[0].split('/').map(x => x.length === 1 ? '0' + x : x).join('/')
+
+  // iterate cart lines, ItemId is used for ItemId, ProductId is used for VariantRecordId
+  // { ItemId: '107848P', Quantity: 1, VariantRecordId: '5637169770' }
+  const lineItems = cart!.CartLines.map((x: ICartLine) => ({
+    ItemId: x.ItemId,
+    Quantity: 1,
+    VariantRecordId: x.ProductId.toString()
+  }))
+
+  return {
+    deliveryScheduleParam: {
+      InventoryType: 'Delivery',
+      Weeks: 6,
+      StoreId: '',
+      Page: 'plp',
+      RequestedDate: formattedToday,
+      ZipCode: '06095',
+      ItemLines: lineItems
+    }
+  }
+}
+
+
+async function getAtpSlotsAndSetDatePicker(cart: ICart) {
+  const payload = buildPayloadForAtpSlots(cart)
+  const atpSlots = await getAtpInventoryDynamic(payload)
+  return atpSlots
+}
+
 export default function Checkout() {
   const router = useRouter()
   // What checkout step am I on?
   // Make a new checkout cart each time user enters from cart screen
   const [checkoutStep, setCheckoutStep] = useState(1)
   const [cart, setCart] = useState<ICart | null>(null)
-  const [atpSlots, setAtpSlots] = useState<IMFIATPInventoryDynamic| null>(null)
+  const [atpSlots, setAtpSlots] = useState<IMFIATPInventoryDynamic | null>(null)
   const [deliveryInfo, setDeliveryInfo] = useState<IEnrichedDeliveryInfo[]>(deliveryInfoFromCms as IEnrichedDeliveryInfo[])
   const [selectedDate, setSelectedDate] = useState(null) // default to today
   const [selectedServiceId, setSelectedServiceId] = useState(1)
   const [customerInfo, setCustomerInfo] = useState<IShippingAddress | null>(null)
   const [cardPaymentSettings, setCardPaymentSettings] = useState<IGetCardPaymentAcceptPointResponse | null>(null)
   const [tokenizedPaymentCardInfo, setTokenizedPaymentCardInfo] = useState<IRetrieveCardPaymentAcceptResultTokenizedPaymentCard | null>(null)
- 
+
 
   // need a ref for sibling to sibling communication
   const [childRef, setChildRef] = useState<RefObject<HTMLButtonElement> | undefined>(undefined)
@@ -476,43 +515,12 @@ export default function Checkout() {
 
   const handleCustomerInfo = useCallback(async (payload: ICustomerInfo) => {
     await submitCustomerInfo(cart!.Id, payload)
-    await getAtpSlotsAndSetDatePicker()
+    const atpSlots = await getAtpSlotsAndSetDatePicker(cart!)
+    setAtpSlots(atpSlots)
     setCustomerInfo(payload.ShippingAddress)
     setCheckoutStep(2)
     router.push('/checkout?step=delivery')
   }, [cart])
-
-  function buildPayloadForAtpSlots() {
-    // '01/29/2024'
-    const today = new Date().toLocaleString('en-US', { timeZone: 'UTC' })
-    const formattedToday = today.split(',')[0].split('/').map(x => x.length === 1 ? '0' + x : x).join('/')
-
-    // iterate cart lines, ItemId is used for ItemId, ProductId is used for VariantRecordId
-    // { ItemId: '107848P', Quantity: 1, VariantRecordId: '5637169770' }
-    const lineItems = cart!.CartLines.map((x: ICartLine) => ({
-      ItemId: x.ItemId,
-      Quantity: 1,
-      VariantRecordId: x.ProductId.toString()
-    }))
-
-    return {
-      deliveryScheduleParam: {
-        InventoryType: 'Delivery',
-        Weeks: 6,
-        StoreId: '',
-        Page: 'plp',
-        RequestedDate: formattedToday,
-        ZipCode: '06095',
-        ItemLines: lineItems
-      }
-    }
-  }
-
-  async function getAtpSlotsAndSetDatePicker() {
-    const payload = buildPayloadForAtpSlots()
-    const atpSlots = await getAtpInventoryDynamic(payload)
-    setAtpSlots(atpSlots)
-  }
 
 
   // TODO: Should use info from Customer Info here
@@ -522,17 +530,17 @@ export default function Checkout() {
       return {
         LineId: `${x.LineId}`,
         DeliverySpecification: {
-          DeliveryModeId: "Delivery",
+          DeliveryModeId: 'Delivery',
           DeliveryPreferenceTypeValue: 1,
           DeliveryAddress: {
-            Name: "",
+            Name: '',
             AddressTypeValue: 6,
-            City: "windsor",
-            State: "CT",
-            Street: "",
-            ZipCode: "06095",
-            ThreeLetterISORegionName: "USA",
-            TaxGroup: "VertexAR"
+            City: 'windsor',
+            State: 'CT',
+            Street: '',
+            ZipCode: '06095',
+            ThreeLetterISORegionName: 'USA',
+            TaxGroup: 'VertexAR'
           }
         }
       }
@@ -575,7 +583,7 @@ export default function Checkout() {
     const payload = builDeliveryPricePayload()
     const res = await getDeliveryPricing(payload)
     // take the pricing from the result and add it into delivery info from cms
-    const enrichedDeliveryInfo  = [...deliveryInfo]
+    const enrichedDeliveryInfo = [...deliveryInfo]
     enrichedDeliveryInfo.forEach(x => x.priceInfo = res.value.filter(r => r.ItemId === x.serviceSku)[0])
     setDeliveryInfo(enrichedDeliveryInfo)
   }
@@ -683,9 +691,10 @@ export default function Checkout() {
   const day = today.getDate()
   const minute = 0 - today.getTimezoneOffset()
   const formatted = new Date(year, month, day, 0, minute, 0, 0)
+
   // Need to remove the Z
 
-  function hasDeliveryCartLine(){
+  function hasDeliveryCartLine() {
     return cart?.CartLines.findIndex(cl => cl.ItemTaxGroupId === 'DELV') !== -1
   }
 
@@ -760,11 +769,12 @@ export default function Checkout() {
     // we also need to add a bunch of other shit like Ecom_RevenueCategory, Ecom_VariantId, Ecom_DSZipCode, Ecom_ProductNameWithBrand, Ecom_ProductType, brandName, categoryName, Ecom_WillCallDateExists, Ecom_DSDeliveryScheduleStatus, 
     return payload
   }
+
   // TODO: see why this is malformed, look at payload from src/modules/mfrm-checkout-payment-instrument/mfrm-checkout-payment-instrument.tsx that goes to retrieveCardPaymentAcceptResultAsync
   async function handlePreCheckout(encodedCardInfo: string) {
     const cardInfoString = atob(encodedCardInfo)
     const cardInfoObject = JSON.parse(cardInfoString)
-    console.log('cardInfoObject',cardInfoObject)
+    console.log('cardInfoObject', cardInfoObject)
     const payload: IRetrieveCardPaymentAcceptResult = {
       resultAccessCode: encodedCardInfo,
       extensionProperties: [],
@@ -787,6 +797,7 @@ export default function Checkout() {
     router.push(`/order-confirmation?id=${res.Id}`)
 
   }
+
   // const cardNamesToTwoChars = new Map()
   // cardNamesToTwoChars.set('Discover', 'DS')
 
@@ -795,65 +806,65 @@ export default function Checkout() {
     // which is silly as we have enough info to let back-end handle the it with what we have already
     // get tokenized card info from state
     return {
-      receiptEmail: "ken.walton@mfrm.com",
+      receiptEmail: 'ken.walton@mfrm.com',
       cartTenderLines: [
         {
-          Currency: "USD",
+          Currency: 'USD',
           Amount: cart!.TotalAmount,
-          TenderTypeId: "5",
+          TenderTypeId: '5',
           CardTypeId: tokenizedPaymentCardInfo!.CardTypeId,
           TokenizedPaymentCard: {
             IsSwipe: false,
-            TenderType: "5",
+            TenderType: '5',
             CardTokenInfo: tokenizedPaymentCardInfo!.CardTokenInfo,
-            Phone: "860-778-6817",
-            Country: "USA",
-            House: "N/A",
-            Address1: "167 Carriage Way",
-            Address2: "",
-            City: "Windsor",
-            State: "CT",
-            Zip: "06095",
-            NameOnCard: "Kenneth Walton",
+            Phone: '860-778-6817',
+            Country: 'USA',
+            House: 'N/A',
+            Address1: '167 Carriage Way',
+            Address2: '',
+            City: 'Windsor',
+            State: 'CT',
+            Zip: '06095',
+            NameOnCard: 'Kenneth Walton',
             CardTypeId: tokenizedPaymentCardInfo!.CardTypeId,
             ExpirationMonth: tokenizedPaymentCardInfo!.ExpirationMonth,
             ExpirationYear: tokenizedPaymentCardInfo!.ExpirationYear,
-            ExtensionProperties: [],
+            ExtensionProperties: []
           },
           ExtensionProperties: [
-            { Key: "clientIPAddress", Value: { StringValue: "68.0.221.93" } },
+            { Key: 'clientIPAddress', Value: { StringValue: '68.0.221.93' } },
             {
-              Key: "forterToken",
+              Key: 'forterToken',
               Value: {
                 StringValue:
-                  "f155a6347ecc451db6382e9be205d531_1708355249960_251_UDF43-m4_15ck__tt"
+                  'f155a6347ecc451db6382e9be205d531_1708355249960_251_UDF43-m4_15ck__tt'
               }
             },
             {
-              Key: "userAgent",
+              Key: 'userAgent',
               Value: {
                 StringValue:
-                  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+                  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
               }
             },
-            { Key: "isForterValidationEnabled", Value: { BooleanValue: false } },
+            { Key: 'isForterValidationEnabled', Value: { BooleanValue: false } },
             {
-              Key: "isForterValidationEnabledForApplePay",
+              Key: 'isForterValidationEnabledForApplePay',
               Value: { BooleanValue: false }
             }
           ]
         }
       ],
       cartVersion: cart!.Version
-    };
-    
+    }
+
   }
 
   async function handleDelivery(itemId: string, date: string) {
     // do we already have a delivery line item?
     if (hasDeliveryCartLine()) {
       const lineIdToRemove = deliveryCartLineId()
-      await removeDeliveryCartLine(cart!.Id, {cartLineIds:[`${lineIdToRemove}`]})
+      await removeDeliveryCartLine(cart!.Id, { cartLineIds: [`${lineIdToRemove}`] })
       // TODO: you also need to clear out delivery attributes on each cartline
     }
     const deliveryLineItemPayload = buildDeliveryLineItemPayload(itemId)
@@ -887,14 +898,14 @@ export default function Checkout() {
   function buildAttribute(name: string, textValue: string) {
     // NOTE: Why do we have to have a decorator on this or it will fail on back-end?
     return {
-      "@odata.type": "#Microsoft.Dynamics.Commerce.Runtime.DataModel.AttributeTextValue",
+      '@odata.type': '#Microsoft.Dynamics.Commerce.Runtime.DataModel.AttributeTextValue',
       ExtensionProperties: [],
       Name: name,
       TextValue: textValue,
       TextValueTranslations: []
     }
   }
-  
+
   return (
     <div>
       <div className="header grid grid-cols-4 lg:grid-cols-4 gap-4">
@@ -936,8 +947,6 @@ export default function Checkout() {
           {cart && (
             <OrderSummary
               cart={cart}
-              buttonText="Checkout"
-              innerRef={childRef}
             />
           )}
         </div>

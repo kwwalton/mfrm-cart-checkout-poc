@@ -39,8 +39,12 @@ export type Cart = {
   id: Scalars['String']['output'];
   /** Cart Item */
   items: Array<CartItem>;
+  /** Recycling fee */
+  recyclingFee: Scalars['NonNegativeFloat']['output'];
   /** Product total */
   subTotal: Scalars['PositiveFloat']['output'];
+  /** Sales tax */
+  tax: Scalars['NonNegativeFloat']['output'];
   /** Grand Total */
   total: Scalars['PositiveFloat']['output'];
 };
