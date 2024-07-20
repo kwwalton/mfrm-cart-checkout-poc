@@ -14,58 +14,44 @@ export async function getQuickCart(cartId: string, zipCode: string): Promise<Del
       zipCode: zipCode
     }
   })
+  const [delayCart, completeCart] = delayed<DelayedCart>()
   const [delayItems, completeItems] = delayed<DelayedCartItem[]>()
   const [delayDelivery, completeDelivery] = delayed<DelayDelivery[]>()
-  const result = new Promise<DelayedCart>((resolve, reject) => {
-    let cartLoaded = false
-    let itemsLoaded = false
-    let deliveryLoaded = false
-    watch.subscribe((val) => {
-      const { data } = val
-      if (data.cart) {
-        console.timeLog('getQuickCart', '-')
-        const delayedCart: DelayedCart = { ...data.cart, items: delayItems }
-        if (!cartLoaded) {
-          cartLoaded = true
-          console.timeLog('getQuickCart', 'Cart', data.cart.count)
-          resolve(delayedCart)
-        }
-        if (data.cart.items) {
-          if (!itemsLoaded) {
-            itemsLoaded = true
-            const itemsWithDelivery: DelayedCartItem[] = data.cart.items.map((item, i) => {
-              return {
-                ...item,
-                variantDelivery: delayDelivery.then(d => d[i]?.variantDelivery || null),
-                variantInMarket: delayDelivery.then(d => d[i]?.variantInMarket || false),
-                variantInStock: delayDelivery.then(d => d[i]?.variantInStock || false)
-              }
-            })
-            console.timeLog('getQuickCart', 'Item', data.cart.items?.length)
-            completeItems(itemsWithDelivery)
+  watch.subscribe((val) => {
+    const { data } = val
+    if (data.cart) {
+      console.timeLog('getQuickCart', '-')
+      const delayedCart: DelayedCart = { ...data.cart, items: delayItems }
+      console.timeLog('getQuickCart', 'Cart', data.cart.count)
+      completeCart(delayedCart)
+      //If Items are delivered resolved them
+      if (data.cart.items) {
+        const itemsWithDelivery: DelayedCartItem[] = data.cart.items.map((item, i) => {
+          return {
+            ...item,
+            variantDelivery: delayDelivery.then(d => d[i]?.variantDelivery || null),
+            variantInMarket: delayDelivery.then(d => d[i]?.variantInMarket || false),
+            variantInStock: delayDelivery.then(d => d[i]?.variantInStock || false)
           }
-          //Eliminate undefined, to make sure the data is complete
-          if (!data.cart.items.some(i => [i.variantInMarket, i.variantInStock, i.variantDelivery].includes(undefined))) {
-            if (!deliveryLoaded) {
-              deliveryLoaded = true
-              const deliveryItems: DelayDelivery[] = data.cart.items.map(i => {
-                return {
-                  variantInMarket: i.variantInMarket!,
-                  variantInStock: i.variantInStock!,
-                  variantDelivery: i.variantDelivery!
-                }
-              })
-              console.timeLog('getQuickCart', 'Delivery', data.cart.items?.length)
-              completeDelivery(deliveryItems)
+        })
+        console.timeLog('getQuickCart', 'Item', data.cart.items?.length)
+        completeItems(itemsWithDelivery)
+        //Eliminate undefined, to make sure the data is complete - ItemDelivery fragment
+        if (!data.cart.items.some(i => [i.variantInMarket, i.variantInStock, i.variantDelivery].includes(undefined))) {
+          const deliveryItems: DelayDelivery[] = data.cart.items.map(i => {
+            return {
+              variantInMarket: i.variantInMarket!,
+              variantInStock: i.variantInStock!,
+              variantDelivery: i.variantDelivery!
             }
-          }
+          })
+          console.timeLog('getQuickCart', 'Delivery', data.cart.items?.length)
+          completeDelivery(deliveryItems)
         }
       }
-    })
-
+    }
   })
-
-  return result
+  return delayCart
 }
 
 type Promisable<T> = {
