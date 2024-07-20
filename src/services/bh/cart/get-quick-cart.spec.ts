@@ -32,15 +32,23 @@ describe('getQuickCart', () => {
     console.timeLog('default', 'items', items)
     expect(items).toStrictEqual(TEST_ITEMS)
     // // @ts-ignore
-    const delivery = items.map(async (i) => ({
-      id: i.id,
-      variantDelivery: await i.variantDelivery,
-      variantInMarket: await i.variantInMarket,
-      variantInStock: await i.variantInStock
-    }))
-    console.timeLog('default', 'delivery', delivery)
-    expect(delivery).toStrictEqual(TEST_DELIVERY)
+    const delivery = []
+    for (const i of items) {
+      const variantDelivery = await i.variantDelivery
+      const variantInMarket = await i.variantInMarket
+      const variantInStock = await i.variantInStock
+      console.timeLog('default', 'dd', variantDelivery, variantInMarket, variantInStock)
 
+      delivery.push({
+        id: i.id,
+        variantDelivery,
+        variantInMarket,
+        variantInStock
+      })
+    }
+    console.timeLog('default', 'delivery', delivery)
+    // @ts-ignore
+    expect(delivery).toStrictEqual(TEST_DELIVERY)
     console.timeEnd('default')
     console.timeEnd('getQuickCart')
   }, 60000)
@@ -168,4 +176,26 @@ const TEST_ITEMS = [
     variantInStock: expect.any(Promise)
   }
 ]
-const TEST_DELIVERY = [{}, {}, {}]
+const TEST_DELIVERY = [{
+  id: '78053ea206674acea293502e6f67101d',
+  variantDelivery: {
+    __typename: 'LocalDateRange',
+    end: '2024-07-26',
+    label: 'Jul 23 to Jul 26',
+    start: '2024-07-23'
+  },
+  variantInMarket: true,
+  variantInStock: false
+},
+  {
+    id: 'dc807ee9d74f46d1a3da44c081f297cd',
+    variantDelivery: null,
+    variantInMarket: true,
+    variantInStock: true
+  },
+  {
+    id: '29b48be9868a41c9bd17948a1d8b236b',
+    variantDelivery: null,
+    variantInMarket: true,
+    variantInStock: true
+  }]

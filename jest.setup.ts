@@ -10,12 +10,21 @@ fetchMock.enableMocks()
 
 beforeEach(() => {
   // IMPORTANT: be careful: https://testing-library.com/docs/using-fake-timers/
-  jest.useFakeTimers()
+  // jest.useFakeTimers()
 })
 
 /***
  * Test helper to simulate wait
  *  ms - milliseconds to wait
  **/
-// global.sleep = (ms: number): Promise<unknown> =>
-//   new Promise((resolve) => setTimeout(resolve, ms));
+// @ts-ignore
+global.sleep = (ms: number): Promise<number> =>
+  new Promise((resolve) => {
+    console.time('Sleep')
+    const res = () => {
+      console.timeLog('Sleep', 'done', ms)
+      resolve(ms)
+      console.timeEnd('Sleep')
+    }
+    setTimeout(res, ms)
+  })
