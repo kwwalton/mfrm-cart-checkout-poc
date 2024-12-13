@@ -1,0 +1,8 @@
+projects:
+  bh:
+    schema: bh.graphql
+    documents: "**/*.bedhub.gql"
+    extensions:
+      endpoints:
+        bh:
+          url: https://bedhub-dev.azurewebsites.net/graphql

@@ -1,0 +1,951 @@
+# This file was generated. Do not edit manually.
+
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+"Directs the executor to defer this fragment when the `if` argument is true or undefined."
+directive @defer(
+    "Deferred when true or undefined."
+    if: Boolean! = true,
+    "Unique name"
+    label: String
+) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Directs the executor to stream plural fields when the `if` argument is true or undefined."
+directive @stream(
+    "Stream when true or undefined."
+    if: Boolean! = true,
+    "Number of items to return immediately"
+    initialCount: Int = 0,
+    "Unique name"
+    label: String
+) on FIELD
+
+"Response for cart mutation"
+interface CartResponse {
+    "Cart data"
+    cart: Cart!
+}
+
+"Product data"
+interface Product {
+    "Product badges"
+    productBadges: [UIBadge!]!
+    "Product brand name"
+    productBrand: String!
+    "Optional Eyebrow type"
+    productEyebrow: ProductEyebrowType
+    "Product item ID"
+    productId(
+        "Required cart id"
+        type: ProductIdType
+    ): ID!
+    "URL linking to the product image"
+    productImage: URL!
+    "Category name"
+    productName: String!
+    "Optional product message description in HTML format."
+    productPromo: String
+    "Average product rating."
+    productRating: NonNegativeFloat!
+    "Product rating count."
+    productRatingCount: NonNegativeInt!
+    "Link tp product detail"
+    productUrl: URL!
+}
+
+"Product category"
+interface ProductCategory {
+    "Category id"
+    categoryId: String!
+    "Category name"
+    categoryName: String!
+    "Category name"
+    categoryUrl: URL!
+}
+
+"Product variant"
+interface ProductVariant {
+    "Product variant attributes"
+    variantAttributes: [String!]!
+    "Product variant delivery estimate"
+    variantDelivery(
+        "Zip code to check delivery for certain items"
+        zip: ZipCode!
+    ): LocalDateRange
+    "Product variant ID"
+    variantId(
+        "Required cart id"
+        type: ProductIdType
+    ): ID!
+    "Product variant is in market if true"
+    variantInMarket(
+        "Zip code to check availability for certain items"
+        zip: ZipCode!
+    ): Boolean!
+    "Product variant is in stock if true"
+    variantInStock(
+        "Zip code to check availability for certain items"
+        zip: ZipCode!
+    ): Boolean!
+    "Original product variant price, indicating discount"
+    variantOriginalPrice: PositiveFloat!
+    "Current product variant price"
+    variantPrice: PositiveFloat!
+    "Product variant type"
+    variantType: ProductType!
+    "Link tp product variant page"
+    variantUrl: URL!
+}
+
+"UI action"
+interface UIActionInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Action label"
+    label: String!
+}
+
+"UI link interface"
+interface UILinkInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Link label"
+    label: String!
+    "If true open link in new tab"
+    openInNewTab: Boolean!
+    "Optional link type (if present treat url as fallback)"
+    type: UILinkType
+    "Link URL"
+    url: URL!
+}
+
+"UI product menu category union"
+union UIProductMenuUnion = UIProductMenu | UIProductMenuLink
+
+"Defining cart fields."
+type Cart {
+    "Total cart count"
+    count: NonNegativeInt!
+    "Cart Coupon"
+    coupons: [CartCoupon!]!
+    "Product discount"
+    discount: NonNegativeFloat!
+    "Dynamics cart version"
+    dynamicsVersion: PositiveInt!
+    "Required cart id"
+    id: String!
+    "Cart Item"
+    items: [CartItem!]!
+    "Recycling fee"
+    recyclingFee: NonNegativeFloat!
+    "Product total"
+    subTotal: PositiveFloat!
+    "Sales tax"
+    tax: NonNegativeFloat!
+    "Grand Total"
+    total: PositiveFloat!
+}
+
+"Response for cart add coupon"
+type CartAddCouponResponse implements CartResponse {
+    "Cart data"
+    cart: Cart!
+    "Response code"
+    code: CartAddCouponResponseCode!
+}
+
+"Response for cart add item"
+type CartAddItemResponse implements CartResponse {
+    "Cart data"
+    cart: Cart!
+    "Response code"
+    code: CartAddItemResponseCode!
+}
+
+type CartCoupon {
+    "Coupon ID"
+    id: String!
+    "Coupon type"
+    type: CartCouponType!
+}
+
+"Cart item representing product(s) in the cart"
+type CartItem implements Product & ProductCategory & ProductVariant {
+    "Category id"
+    categoryId: String!
+    "Category name"
+    categoryName: String!
+    "Category name"
+    categoryUrl: URL!
+    "Required count value"
+    count: NonNegativeInt!
+    "Product coupons"
+    coupons: [CartCoupon!]!
+    "Cart item Id"
+    id: String!
+    "Current product price"
+    price: PositiveFloat!
+    "Product badges"
+    productBadges: [UIBadge!]!
+    "Product brand name"
+    productBrand: String!
+    "Optional Eyebrow type"
+    productEyebrow: ProductEyebrowType
+    "Product item ID"
+    productId(
+        "Required cart id"
+        type: ProductIdType
+    ): ID!
+    "URL linking to the product image"
+    productImage: URL!
+    "Category name"
+    productName: String!
+    "Optional product message description in HTML format."
+    productPromo: String
+    "Average product rating."
+    productRating: NonNegativeFloat!
+    "Product rating count."
+    productRatingCount: NonNegativeInt!
+    "Link tp product detail"
+    productUrl: URL!
+    "Product variant attributes"
+    variantAttributes: [String!]!
+    "Product variant delivery estimate"
+    variantDelivery(
+        "Zip code to check delivery for certain items"
+        zip: ZipCode!
+    ): LocalDateRange
+    "Product variant ID"
+    variantId(
+        "Required cart id"
+        type: ProductIdType
+    ): ID!
+    "Product variant is in market if true"
+    variantInMarket(
+        "Zip code to check availability for certain items"
+        zip: ZipCode!
+    ): Boolean!
+    "Product variant is in stock if true"
+    variantInStock(
+        "Zip code to check availability for certain items"
+        zip: ZipCode!
+    ): Boolean!
+    "Original product variant price, indicating discount"
+    variantOriginalPrice: PositiveFloat!
+    "Current product variant price"
+    variantPrice: PositiveFloat!
+    "Product variant type"
+    variantType: ProductType!
+    "Link tp product variant page"
+    variantUrl: URL!
+}
+
+"Response for cart remove coupon"
+type CartRemoveCouponResponse implements CartResponse {
+    "Cart data"
+    cart: Cart!
+    "Response code"
+    code: CartRemoveCouponResponseCode!
+}
+
+"Response for cart remove item"
+type CartRemoveItemResponse implements CartResponse {
+    "Cart data"
+    cart: Cart!
+    "Response code"
+    code: CartRemoveItemResponseCode!
+}
+
+"Response for cart update item"
+type CartUpdateItemResponse implements CartResponse {
+    "Cart data"
+    cart: Cart!
+    "Response code"
+    code: CartUpdateItemResponseCode!
+}
+
+"Local date range"
+type LocalDateRange {
+    "End date"
+    end: LocalDate!
+    "Formatted date range"
+    label: String!
+    "Start date"
+    start: LocalDate!
+}
+
+type Mutation {
+    "Add coupon to cart"
+    cartAddCoupon(
+        "Required cart id"
+        cartId: ID!,
+        "Coupon to add"
+        coupon: ID!,
+        "Optional token"
+        token: String
+    ): CartAddCouponResponse!
+    "Add item in cart"
+    cartAddItem(
+        "Cart ID"
+        cartId: ID!,
+        "Count"
+        count: PositiveInt!,
+        "Product id"
+        productId: ID!,
+        "Optional token"
+        token: String,
+        "Product variant id"
+        variantId: ID!
+    ): CartAddItemResponse!
+    "Remove coupon from cart"
+    cartRemoveCoupon(
+        "Required cart id"
+        cartId: ID!,
+        "Coupon to remove"
+        coupon: ID!,
+        "Optional token"
+        token: String
+    ): CartRemoveCouponResponse!
+    "Remove item from cart"
+    cartRemoveItem(
+        "Cart ID"
+        cartId: ID!,
+        "Cart item ID"
+        cartItemId: ID!,
+        "Optional token"
+        token: String
+    ): CartRemoveItemResponse!
+    "Update item in cart"
+    cartUpdateItem(
+        "Cart ID"
+        cartId: ID!,
+        "Cart item id"
+        cartItemId: ID!,
+        "New count"
+        count: PositiveInt!,
+        "Optional token"
+        token: String
+    ): CartUpdateItemResponse!
+    "Sync ached SiteBuilder data. If true, sync was successful."
+    syncSiteBuilder: Boolean! @deprecated(reason: "Only uused internally, may be removed")
+}
+
+type Query {
+    "Cart related data."
+    cart(
+        "Required cart id"
+        cartId: ID!,
+        "Optional token"
+        token: String
+    ): Cart!
+    "ID tied to this request"
+    requestId: UUID! @deprecated(reason: "Read from header `x-request-id`")
+    "UI related data."
+    ui: UIQuery!
+}
+
+"UI action"
+type UIAction implements UIActionInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Action label"
+    label: String!
+}
+
+type UIBadge {
+    "Badge label"
+    label: String!
+    "Optional badge type"
+    type: UIBadgeType!
+}
+
+"Best for reasons for a product."
+type UIBestFor {
+    "List denoting reasons to buy."
+    descriptions: [String!]!
+    "Title for best for section."
+    title: String!
+}
+
+"Color varant information."
+type UIColorVariant {
+    "Hex color value."
+    color: HexColorCode!
+    "Color name."
+    name: String!
+    "URL link for product detail with variant."
+    url: URL!
+}
+
+"UI date range"
+type UIDateRange {
+    "End date/time in ISO string"
+    end: LocalDateTime!
+    "Start date/time in ISO string"
+    start: LocalDateTime!
+}
+
+"UI disclosure"
+type UIDisclosure {
+    "Maximum number of characters to display"
+    maximum: Float!
+    "Action to expand items"
+    more: UIAction!
+    "Disclosure sections"
+    sections: [UIDisclosureSection!]!
+}
+
+"UI disclosure section"
+type UIDisclosureSection {
+    "HTML content for disclosure"
+    html: String!
+    "If true truncate disclosure"
+    truncate: Boolean!
+}
+
+"Eyebrow messaging type."
+type UIEyebrow {
+    "Eyebrow label to display."
+    label: String!
+    "Eyebrow type, typically used for icon."
+    type: UIEyebrowType!
+}
+
+"UI footer"
+type UIFooter {
+    "Accessibility reader link"
+    accessibilityReader: UIImageLink!
+    "Footer categories"
+    categories: [UIFooterCategory!]!
+    "Footer social media links"
+    socials: [UIImageLink!]!
+}
+
+"UI footer category"
+type UIFooterCategory {
+    "Footer category items"
+    items: [UILink!]!
+    "Footer category label"
+    label: String!
+}
+
+"UI header"
+type UIHeader {
+    "Header account related data"
+    account: UIHeaderAccount!
+    "Header account menu"
+    accountMenu: [UIHeaderAccountMenu!]! @deprecated(reason: "Use account field")
+    "Header actions"
+    actions: [UIHeaderAction!]!
+    "Header logo"
+    logo: UIImageLink!
+    "Header search"
+    search: UIHeaderSearch!
+}
+
+"UI header account"
+type UIHeaderAccount {
+    "My account link"
+    myAccount: UILink!
+    "Sign in link"
+    signIn: UILink!
+    "Sign out link"
+    signOut: UILink!
+    "Sign up link"
+    signUp: UILink!
+}
+
+"UI header account menu"
+type UIHeaderAccountMenu implements UILinkInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Callout item flag"
+    callout: Boolean!
+    "Link label"
+    label: String!
+    "If true open link in new tab"
+    openInNewTab: Boolean!
+    "Reveal if signed in (otherwise reveal if signed out)"
+    signedIn: Boolean!
+    "Optional link type (if present treat url as fallback)"
+    type: UILinkType
+    "Link URL"
+    url: URL!
+}
+
+"UI header action"
+type UIHeaderAction implements UILinkInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Show action to the left of logo"
+    beforeLogo: Boolean! @deprecated(reason: "Use position field")
+    "Callout text flag"
+    callout: Boolean!
+    "Show action in desktop view"
+    desktop: Boolean!
+    "Show action in small desktop view"
+    desktopSmall: Boolean!
+    "Action icon image"
+    image: UIImage
+    "Link label"
+    label: String!
+    "Show action in mobile view"
+    mobile: Boolean!
+    "If true open link in new tab"
+    openInNewTab: Boolean!
+    "Position of action relstive to top navigation"
+    position: UIHeaderActionPosition
+    "Show action when scrolling"
+    sticky: Boolean!
+    "Optional subtext under label"
+    subLabel: String
+    "Show action in tablet view"
+    tablet: Boolean!
+    "Optional link type (if present treat url as fallback)"
+    type: UILinkType
+    "Link URL"
+    url: URL!
+}
+
+"UI header search"
+type UIHeaderSearch {
+    "Search icon"
+    icon: UIImage!
+    "Search placeholder"
+    placeholder: String!
+    "Search results URL"
+    url: URL!
+}
+
+"UI image"
+type UIImage {
+    "Optional alt text."
+    alt: String
+    "Image URL"
+    url: String!
+}
+
+"UI link"
+type UIImageLink implements UILinkInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Link image"
+    image: UIImage!
+    "Link label"
+    label: String!
+    "If true open link in new tab"
+    openInNewTab: Boolean!
+    "Optional link type (if present treat url as fallback)"
+    type: UILinkType
+    "Link URL"
+    url: URL!
+}
+
+"UI link"
+type UILink implements UILinkInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Link label"
+    label: String!
+    "If true open link in new tab"
+    openInNewTab: Boolean!
+    "Optional link type (if present treat url as fallback)"
+    type: UILinkType
+    "Link URL"
+    url: URL!
+}
+
+"UI navbar"
+type UINavbar {
+    "Product menu elements"
+    products: [UIProductMenuUnion!]!
+    "Utility menu elements"
+    utilities: [UILink!]!
+}
+
+"UI pencil banner"
+type UIPencilBanner {
+    "Banner interval (in ms)"
+    interval: Int!
+    "Banner items"
+    items: [UIPencilBannerItem!]!
+    "Next action"
+    next: UIPencilBannerAction!
+    "Previous action"
+    previous: UIPencilBannerAction!
+}
+
+"UI pencil banner action"
+type UIPencilBannerAction implements UIActionInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Action image"
+    image: UIImage!
+    "Action label"
+    label: String!
+}
+
+"UI pencil banner item"
+type UIPencilBannerItem implements UILinkInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Optional countdown date/time range"
+    countdown: UIDateRange
+    "Additional HTML content for banner"
+    html: String!
+    "Link label"
+    label: String!
+    "If true open link in new tab"
+    openInNewTab: Boolean!
+    "Optional schedule date/time range"
+    schedule: UIDateRange
+    "Optional link type (if present treat url as fallback)"
+    type: UILinkType
+    "Link URL"
+    url: URL!
+}
+
+"UI product menu"
+type UIProductMenu {
+    "Optional CTA"
+    action: UILink
+    "Optional badge indicator"
+    badge: UIBadge
+    "Callout item flag"
+    callout: Boolean!
+    "Product categories"
+    categories: [UIProductMenuCategory!]!
+    "Menu item label"
+    label: String!
+    "Optional promotion"
+    promotion: UIImageLink
+    "Product subcategories"
+    subcategories: [UIProductMenuSubcategory!]!
+}
+
+"UI product menu category"
+type UIProductMenuAccordion {
+    "Action to collapse items"
+    less: UIAction!
+    "Maximum number of category items to initially reveal"
+    maximum: Int!
+    "Action to expand items"
+    more: UIAction!
+}
+
+"UI product menu category"
+type UIProductMenuCategory {
+    "Optional accordion"
+    accordion: UIProductMenuAccordion
+    "Category items"
+    items: [UIProductMenuCategoryItem!]!
+    "Optional category label"
+    label: String
+}
+
+"UI product menu category item"
+type UIProductMenuCategoryItem implements UILinkInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Optional badge indicator"
+    badge: UIBadge
+    "Category item image"
+    image: UIImage!
+    "Link label"
+    label: String!
+    "If true open link in new tab"
+    openInNewTab: Boolean!
+    "Optional link type (if present treat url as fallback)"
+    type: UILinkType
+    "Link URL"
+    url: URL!
+}
+
+"UI product menu as link"
+type UIProductMenuLink implements UILinkInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Optional badge indicator"
+    badge: UIBadge
+    "Callout item flag"
+    callout: Boolean!
+    "Rich text label"
+    html: String!
+    "Link label"
+    label: String!
+    "If true open link in new tab"
+    openInNewTab: Boolean!
+    "Optional link type (if present treat url as fallback)"
+    type: UILinkType
+    "Link URL"
+    url: URL!
+}
+
+"UI product menu subcategory"
+type UIProductMenuSubcategory {
+    "Subcategory items"
+    items: [UIProductMenuSubcategoryItem!]!
+    "Subcategory label"
+    label: String!
+}
+
+"UI product menu subcategory item"
+type UIProductMenuSubcategoryItem implements UILinkInterface {
+    "Optional ARIA label"
+    ariaLabel: String
+    "Optional badge indicator"
+    badge: UIBadge
+    "Optional subcategory item image"
+    image: UIImage
+    "Link label"
+    label: String!
+    "If true open link in new tab"
+    openInNewTab: Boolean!
+    "Optional link type (if present treat url as fallback)"
+    type: UILinkType
+    "Link URL"
+    url: URL!
+}
+
+"UI product tile"
+type UIProductTile {
+    "Optional badge for product."
+    badge: UIBadge
+    "Optional best for details for product."
+    bestFor: UIBestFor
+    "Optional list of available color variants."
+    colorVariants: [UIColorVariant!]
+    "Optional delivery estimate. If not available it is unknown."
+    deliveryEstimate: String
+    "Optional eyebrow type."
+    eyebrow: UIEyebrow
+    "Optional badge for product."
+    image: UIImage!
+    "If true, product is available in store."
+    inStore: Boolean!
+    "Product display name."
+    name: String!
+    "Original product price."
+    originalPrice: NonNegativeFloat
+    "Current product price."
+    price: NonNegativeFloat!
+    "Optional price badge."
+    priceBadge: UIBadge
+    "Optional product message description in HTML format."
+    promo: String
+    "Average product rating."
+    rating: NonNegativeFloat!
+    "Product rating count."
+    ratingCount: NonNegativeInt!
+    "Link to product page"
+    url: URL!
+    "Optional label describing product variants. (size, color, etc.)"
+    variantsLabel: String
+}
+
+"UI query"
+type UIQuery {
+    "UI disclosure banner"
+    disclosure: UIDisclosure!
+    "UI footer"
+    footer: UIFooter!
+    "UI header"
+    header: UIHeader!
+    "UI navbar"
+    navbar: UINavbar!
+    "UI pencil banner"
+    pencilBanner: UIPencilBanner!
+    "UI product tiles by product"
+    productTiles(
+        "List of product IDs"
+        productIds: [ID!]!,
+        "Product size"
+        size: ProductSize,
+        "Optional store ID"
+        storeId: ID,
+        "Optional zip code"
+        zip: ZipCode
+    ): [UIProductTile!]!
+    "UI product tiles by category"
+    productTilesByCategory(
+        "Category ID"
+        categoryId: ID!,
+        "Product size"
+        size: ProductSize,
+        "Optional store ID"
+        storeId: ID,
+        "Optional zip code"
+        zip: ZipCode
+    ): [UIProductTile!]!
+}
+
+"Response code for cart add coupon"
+enum CartAddCouponResponseCode {
+    "Coupon cannot be used with others"
+    EXCLUSIVE
+    "Coupon has expired"
+    EXPIRED
+    "Coupon is not applicable to cart"
+    INVALID
+    "Coupon has reached use limit"
+    LIMIT
+    "Coupon successfully added"
+    OK
+}
+
+"Response code for cart add item"
+enum CartAddItemResponseCode {
+    "Item successfully updated"
+    OK
+}
+
+"Cart coupon type"
+enum CartCouponType {
+    "Basic coupon"
+    BASIC
+    "Bonus item coupon"
+    BONUS_ITEM
+}
+
+"Response code for cart remove coupon"
+enum CartRemoveCouponResponseCode {
+    "Coupon successfully removed"
+    OK
+}
+
+"Response code for cart remove item"
+enum CartRemoveItemResponseCode {
+    "Item successfully removed"
+    OK
+}
+
+"Response code for cart update item"
+enum CartUpdateItemResponseCode {
+    "Item successfully updated"
+    OK
+}
+
+"Mattress Firm product Eyebrow type."
+enum ProductEyebrowType {
+    "Product best seller"
+    BEST_SELLER
+    "Mattress Firm exclusive"
+    EXCLUSIVE
+    "Sleep expert"
+    SLEEP_EXPERT
+    "Sleep score"
+    SLEEP_SCORE
+}
+
+"Product ID types supported."
+enum ProductIdType {
+    "MSFT Dynamics based ID"
+    DYNAMICS
+    "Mattress Firm bassed ID"
+    MFRM
+}
+
+"Product size"
+enum ProductSize {
+    "California King size"
+    CALIFORNIA_KING
+    "Full size"
+    FULL
+    "King size"
+    KING
+    "Queen size"
+    QUEEN
+    "Split California King size"
+    SPLIT_CALIFORNIA_KING
+    "Twin size"
+    TWIN
+    "Twin XL size"
+    TWIN_XL
+}
+
+"Mattress Firm product type."
+enum ProductType {
+    "Delivery product type."
+    DELIVERY
+    "Dropship product type."
+    DROPSHIP
+    "Small partcel product type."
+    SMALL_PARCEL
+}
+
+"Badge styling type"
+enum UIBadgeType {
+    "Conversational non-urgent badge."
+    CONVERSATIONAL
+    "New item related badge."
+    NEW
+    "Sale related badge."
+    SALE
+    "Urgent related badge."
+    URGENCY
+}
+
+"Eyebrow messaging type."
+enum UIEyebrowType {
+    "Product best seller."
+    BEST_SELLER
+    "Mattress Firm exclusive."
+    EXCLUSIVE
+    "Sleep expert."
+    SLEEP_EXPERT
+    "Sleep score."
+    SLEEP_SCORE
+}
+
+"Position of action relative to header"
+enum UIHeaderActionPosition {
+    "Before logo location"
+    BEFORE_LOGO
+    "Bottom of top navigation for mobile view"
+    BOTTOM
+}
+
+"Link type denoting special functionality"
+enum UILinkType {
+    "Account related functionality"
+    ACCOUNT
+    "Cart related functionality"
+    CART
+    "Chat realted functionality"
+    CHAT
+    "Stores related functionality"
+    STORES
+}
+
+"A field whose value is a hex color code: https://en.wikipedia.org/wiki/Web_colors."
+scalar HexColorCode
+
+"A local date string (i.e., with no associated timezone) in `YYYY-MM-DD` format, e.g. `2020-01-01`."
+scalar LocalDate
+
+"A local date-time string (i.e., with no associated timezone) in `YYYY-MM-DDTHH:mm:ss` format, e.g. `2020-01-01T00:00:00`."
+scalar LocalDateTime
+
+"Floats that will have a value of 0 or more."
+scalar NonNegativeFloat
+
+"Integers that will have a value of 0 or more."
+scalar NonNegativeInt
+
+"Floats that will have a value greater than 0."
+scalar PositiveFloat
+
+"Integers that will have a value greater than 0."
+scalar PositiveInt
+
+"A field whose value conforms to the standard URL format as specified in RFC3986: https://www.ietf.org/rfc/rfc3986.txt."
+scalar URL
+
+"A field whose value is a generic Universally Unique Identifier: https://en.wikipedia.org/wiki/Universally_unique_identifier."
+scalar UUID
+
+"5 digit US zip code"
+scalar ZipCode

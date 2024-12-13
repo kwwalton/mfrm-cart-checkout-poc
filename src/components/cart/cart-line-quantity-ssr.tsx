@@ -8,7 +8,7 @@ import { useOptimistic } from "react";
 
 interface ICartLineQuantitySsrProps {
   cartId: string
-  cartLine: ICartLine
+  cartLine: { LineId: string,  Quantity: number}
 }
 
 export default function CartLineQuantitySsr({
